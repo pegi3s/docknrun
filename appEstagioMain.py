@@ -356,12 +356,9 @@ def copy_email():
     pyperclip.copy(email)
     print("Email copied to clipboard:", email)
 
-frame_width = 1000
-frame_height = 150
-
 # Create frame for email box
-email_frame = tk.Frame(window, bg="white", bd=2, relief="groove", width=frame_width, height=frame_height)
-email_frame.place(relx=0.2, rely=0.865, relwidth=0.1, relheight=0.12)
+email_frame = tk.Frame(window, bg="white", bd=2, relief="groove", width=250, height=150)
+email_frame.place(relx=0.2, rely=0.865, relwidth=0.15, relheight=0.12)
 
 # Email label
 email_label = tk.Label(email_frame, text="Contact Us", bg="white", padx=5, pady=2, font=("Helvetica", 14, "bold"), fg="black")
@@ -375,9 +372,9 @@ email_address.place(relx=0.5, rely=0.4, anchor="center")
 email_button = tk.Button(email_frame, text="Copy Email", bg="#007bff", fg="white", padx=10, pady=2, command = lambda:copy_email())
 email_button.place(relx=0.5, rely=0.75, anchor="center")
 
-dockerManager_button = tk.Button(window, text="My Docker Images", command=open_dockerManager_wrapper, width=frame_width, height=frame_height, bg = "white")
+dockerManager_button = tk.Button(window, text="My Docker Images", command=open_dockerManager_wrapper, width=250, height=150, bg = "white")
 
-dockerManager_button.place(relx=0.7, rely=0.865, relwidth=0.1, relheight=0.12)
+dockerManager_button.place(relx=0.7, rely=0.865, relwidth=0.15, relheight=0.12)
 
 
 
