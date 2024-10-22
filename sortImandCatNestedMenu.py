@@ -5,6 +5,7 @@ Created on Wed Jun  5 11:15:17 2024
 @author: diogo
 """
 
+
 class Term:
     def __init__(self, term_id, name, definition, is_a):
         self.term_id = term_id
@@ -42,7 +43,6 @@ def parse_obo_file(obo_text_data):
     return terms
 
 
-
 def build_term_hierarchy_string(terms, term_id, indent=0):
     result = ""
     if term_id in terms:
@@ -67,7 +67,7 @@ def hierarchy_structure(obo_text_data):
     return hierarchy_string
 
 
-def convert_CatOntToNestedMenu(text):
+def convert_ontology_categories_for_nested_button(text):
     lines = text.split('\n')
     json_output = []
     stack = []
@@ -108,7 +108,7 @@ def add_image_to_category(categories, dio_id, image):
     return False
 
 
-def organize_images_Nested_Menu(diaf_text_data, categories):
+def organize_images_for_nested_menu(diaf_text_data, categories):
     lines = diaf_text_data.splitlines()
     for line in lines:
         dio_id, image = line.strip().split()
@@ -124,6 +124,3 @@ def remove_prefix(d):
         return [remove_prefix(item) for item in d]
     else:
         return d
-
-
-

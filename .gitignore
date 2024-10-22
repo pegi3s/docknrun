@@ -3,3 +3,5 @@ __pycache__
 Manage_docs
 data
 config
+.idea
+.vscode

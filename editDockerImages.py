@@ -1,7 +1,6 @@
 import subprocess
 import tkinter as tk
 from tkinter import ttk
-from tkinter import messagebox
 from functionsToManageDocker import delete_docker_image
 from functionsToManageDocker import get_docker_images
 
