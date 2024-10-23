@@ -21,11 +21,6 @@ import requests
 import runCommandFunctions
 from functionsForImagesOptions import findImageVersions
 
-
-###UM ERRO QUE VAI EXISTIR, em latest invocations vai ser complicado ir buscar os dados para substituir. So se no latest Invocatio file que se criar, se guarde num campo abaixo esse mesmo nome. Em principio deixo para o proximo, boa sorte.
-
-# DEIXOU DE DAR A PARTE DE COMUNICAR COM O WINDOWS AJUDA
-
 def open_secondary_window(image_selected):
     # # Carregar o JSON
     # json_url = "https://raw.githubusercontent.com/pegi3s/dockerfiles/master/metadata/metadata.json"
@@ -57,12 +52,11 @@ def open_secondary_window(image_selected):
     secondary_window.title("Secondary Window")
     secondary_window.config(width=700, height=817)
 
-    # Título da página
+    # Títle page
     input_title_label = tk.Label(secondary_window, text=image_selected, fg="black", font=("sans-serif", 25))
     input_title_label.place(relx=0.5, rely=0.05, anchor=tk.CENTER)
     input_title_label.update()
 
-    # COLOCAR DOIS SUBMENUS, UM COM AS IMAGENS RECOMENDADAS (NOVO JSON) E COM TODAS AS IMAGENS
     # Function to handle menu option selection
     def menu_option_selected(option):
         selected_option.set(option)
@@ -71,14 +65,14 @@ def open_secondary_window(image_selected):
     def show_context_menu(event):
         context_menu.post(event.x_root, event.y_root)
 
-    # Butão do context menu
+    # Context menu button
     menu_button = tk.Button(secondary_window, text="Menu", bg="#3498db", fg="white", font=("Helvetica", 10, "bold"),
                             relief="raised", width=16, height=1)
     menu_button.place(x=input_title_label.winfo_x() + input_title_label.winfo_width() + 5,
                       y=input_title_label.winfo_y() + 10)
     menu_button.bind("<Button-1>", show_context_menu)
 
-    # Cria o context menu
+    # Create the context menu
     context_menu = tk.Menu(secondary_window, tearoff=0)
 
     response = requests.get("http://evolution6.i3s.up.pt/static/pegi3s/dockerfiles/images-and-tags.txt")
@@ -96,7 +90,7 @@ def open_secondary_window(image_selected):
 
     def update_menu_option():
         menu_button.config(
-            text=selected_option.get())  # Há um erro no adops porque lista como adops-gui, mas damos o nome da imagem de adops no json e na ontologia
+            text=selected_option.get())
 
     update_menu_option()
 
@@ -106,12 +100,12 @@ def open_secondary_window(image_selected):
 
     docButtton = tk.Button(secondary_window, text="Open Documentation", bg="#3498db", fg="white",
                            font=("Helvetica", 10, "bold"), relief="raised", width=16,
-                           height=1)  # abre os docs das imagens
+                           height=1)  # opens image documentation
     docButtton.config(command=lambda: webbrowser.open(image_data["manual_url"]))
 
     pegi3sButton = tk.Button(secondary_window, text="Open pegi3s", bg="#3498db", fg="white",
                              font=("Helvetica", 10, "bold"), relief="raised", width=16,
-                             height=1)  # Abre a página do pegi3s da imagem
+                             height=1)  # opens pegi3s page for the selected image
     pegi3sButton.config(command=lambda: webbrowser.open(image_data["pegi3s_url"]))
 
     docButtton.place(relx=0.3, rely=0.14, anchor=tk.CENTER)
@@ -126,15 +120,15 @@ def open_secondary_window(image_selected):
         rumParamsNoInput = runCTextBox.get("1.0", tk.END)
         try:
             runParamsWithInput = runCommandFunctions.set_up_Input_Name(rumParamsNoInput, prevInputName, file_path,
-                                                                       "/" + file_type + "Folder")
+                                                                       "/" + file_type + "File")
         except NameError:
-            runParamsWithInput = runCommandFunctions.set_up_Input_Name(rumParamsNoInput, "/" + file_type + "Folder",
-                                                                       file_path, "/" + file_type + "Folder")
+            runParamsWithInput = runCommandFunctions.set_up_Input_Name(rumParamsNoInput, "/" + file_type + "File",
+                                                                       file_path, "/" + file_type + "File")
         prevInputName = file_path
         runCTextBox.delete("1.0", tk.END)
         runCTextBox.insert(tk.END, runParamsWithInput)
 
-    # WARNING PARA O UTILIZADOR QUANDO HOUVER MAIS QUE 3 FICHEIROS
+    # WARNING FOR THE USER WHEN THERE ARE MORE THAN 3 INPUT FILES
     canvas_warning = tk.Canvas(secondary_window, width=25, height=25)
 
     def warningmore3FileTypes(x, y, width, canvas_warning):
@@ -154,7 +148,7 @@ def open_secondary_window(image_selected):
                                 lambda event, canvas=canvas_warning, x=x, y=y: show_context_menu_tooltip(event,
                                                                                                          "Change the directory path on the parameters box of the other file types"))
 
-    # Criação dos botões e campos de entrada
+    # Creating buttons and test boxes
     butSelectFileType1 = tk.Button(secondary_window, bg="#3498db", fg="white", font=("Helvetica", 10, "bold"),
                                    relief="raised", width=16, height=1)
     butSelectFileType2 = tk.Button(secondary_window, bg="#3498db", fg="white", font=("Helvetica", 10, "bold"),
@@ -167,48 +161,47 @@ def open_secondary_window(image_selected):
         nonlocal butSelectFileType1, butSelectFileType2, butSelectFileType3, frame_No_Input
 
         if input_data_types == [""]:
-            # Criando um frame que será a caixa menor dentro da janela principal
+            # Creating frame within main window
             frame_No_Input.place(relx=0.05, rely=0.22, anchor=tk.NW)
 
-            # Criando um rótulo com o texto e centralizando-o dentro do frame
+            # Creating a centered label
             label = tk.Label(frame_No_Input, text="This image doesn't require input", font=("Arial", 14),
                              bg="lightblue")
             label.place(relx=0.5, rely=0.5, anchor=tk.CENTER)
         else:
-            # Primeiro botão e campo de entrada
+            # First button and field
             butSelectFileType1.config(text="Select a " + input_data_types[0] + " file",
                                       command=lambda: choose_file_input(input_FileType_entry1, input_data_types[0]))
             butSelectFileType1.place(relx=0.05, rely=0.23)
             input_FileType_entry1 = tk.Entry(secondary_window, width=30, font=(
-                "Helvetica", 12))  # O local onde vai estar o path do botão específico
+                "Helvetica", 12))  # Place where the button is going to be
             input_FileType_entry1.place(relx=0.3, rely=0.25, anchor=tk.W)
 
-            # Segundo botão e campo de entrada, se houver
+            # Second button and field, if any
             if len(input_data_types) > 1:
                 butSelectFileType2.config(text="Select a " + input_data_types[1] + " file",
                                           command=lambda: choose_file_input(input_FileType_entry1, input_data_types[1]))
                 butSelectFileType2.place(relx=0.05, rely=0.28)
                 input_FileType_entry2 = tk.Entry(secondary_window, width=30, font=(
-                    "Helvetica", 12))  # O local onde vai estar o path do botão específico
+                    "Helvetica", 12))  # Place where the button is going to be
                 input_FileType_entry2.place(relx=0.3, rely=0.3, anchor=tk.W)
 
-            # Terceiro botão e campo de entrada, se houver
+            # Third button and field, if any
             if len(input_data_types) > 2:
                 butSelectFileType3.config(text="Select a " + input_data_types[2] + " file",
                                           command=lambda: choose_file_input(input_FileType_entry1, input_data_types[2]))
                 butSelectFileType3.place(relx=0.05, rely=0.33)
                 input_FileType_entry3 = tk.Entry(secondary_window, width=30, font=(
-                    "Helvetica", 12))  # O local onde vai estar o path do botão específico
+                    "Helvetica", 12))  # Place where the button is going to be
                 input_FileType_entry3.place(relx=0.3, rely=0.35, anchor=tk.W)
             if len(input_data_types) > 3:
                 input_label.update()
                 warningmore3FileTypes(input_label.winfo_x(), input_label.winfo_y(), input_label.winfo_width(), canvas)
 
-    #################### INPUT DO DOCUMENTO##############################
+    #################### DOCUMENT INPUT  ##############################
     input_label = tk.Label(secondary_window, text="Input", fg="black", font=("sans-serif", 12))
     input_label.place(relx=0.05, rely=0.2, anchor=tk.W)
 
-    ###################################Que desafio#####################
     input_data_types = None
     if "input_data_type" in image_data:
         input_data_types = image_data["input_data_type"]
@@ -236,14 +229,14 @@ def open_secondary_window(image_selected):
     output_text_box.place(relx=0.05, rely=0.45, anchor=tk.W)
     output_text_box.update()
 
-    # FuncaoPara Verificar se existem espaços (nao pode existir no nome do ficheiro output)
+    # Check if there are spaces in output_name (none allowed)
     def contains_space(s):
         return " " in s
 
-    # Variável global
+    # Global Variable
     prevOutputName = None
 
-    # Função que atualiza o RUNCBox com o novo nome de output
+    # updates RUNCBox with new output name
     def output_button():
         global prevOutputName
         newOutputName = output_text_box.get("1.0", tk.END).strip()
@@ -341,27 +334,34 @@ def open_secondary_window(image_selected):
         # Dividir a string nos delimitadores ',' e '='
         parts = config_data.split('\n')
 
-        # Inicializar as variáveis
+        # Variables Initialization
         run_dir_path = None
         past_invocations_path = None
         user_notes_path = None
         executable_file_path = None
 
-        # Processar cada parte para extrair os valores
-        for part in parts:
-            key, value = part.split('=')
-            if key == 'dir':
-                run_dir_path = value
-            elif key == 'past_invocations':
-                past_invocations_path = value
-            elif key == 'user_notes':
-                user_notes_path = value
-            elif key == 'executable_files':
-                executable_file_path = value
+    # Process each part to extract values
+    for part in parts:
+        if '=' in part:
+            key_value = part.split('=', 1)  # Only split on the first '=' occurrence
+            if len(key_value) == 2:  # Ensure split resulted in two parts
+                key, value = key_value
+                if key == 'dir':
+                    run_dir_path = value
+                elif key == 'past_invocations':
+                    past_invocations_path = value
+                elif key == 'user_notes':
+                    user_notes_path = value
+                elif key == 'executable_files':
+                    executable_file_path = value
+                else:
+                    print(f"Unknown key: {key}")
             else:
-                pass
+                print(f"Invalid part: {part}")  # Handle the case where '=' is present but split is still not valid
+        else:
+            print(f"Skipping invalid entry (no '=' found): {part}")
 
-    # Porque é que não fica fora do working dir?
+
     def create_folder_if_not_exists(parent_folder, folder_name):
         folder_path = os.path.join(parent_folder, folder_name)
         folder_path = "/data" + folder_path
@@ -375,17 +375,17 @@ def open_secondary_window(image_selected):
     # folderUserNotes = os.getcwd() + "/User_Notes"
     create_folder_if_not_exists(user_notes_path, "User_Notes")
 
-    # Verifica se Dentro da WD existe um folder de Latest Invocations, se não existir, cria
+    # Check and if needed creates a Latest_Invocations folder
     create_folder_if_not_exists(past_invocations_path, "Latest_Invocations")
 
-    # Verifica se Dentro da WD existe um folder de Executable Files, se não existir, cria
+    # Check and if needed creates an Executable_Files folder
     create_folder_if_not_exists(executable_file_path, "Executable_Files")
 
-    # Para verificar se existem latest invocations da imagem atual:
+    # Check if there are latest invocations for selected iamge
     folderLatestInvo = past_invocations_path + "/Latest_Invocations"
     folderImageSelectedLI = image_selected + "_LatestInvocations"
 
-    # Para verificar se existem latest invocations da imagem atual:
+    # Check if there are latest invocations for selected iamge in executable files
     folderExecutFiles = past_invocations_path + "/Executable_Files"
     folderImageSelectedEXE = image_selected + "_Executable_Files"
 
@@ -466,7 +466,7 @@ def open_secondary_window(image_selected):
         runCTextBox.delete("1.0", tk.END)
         runCTextBox.insert(tk.END, text_Data_dir)
 
-    # Butão da test_data_invocation
+    # test_data_invocation button
     tdButton = tk.Button(secondary_window, text="Test Data Invocation",
                          command=lambda: get_text_data_invocation_command(), bg="#3498db", fg="white",
                          font=("Helvetica", 10, "bold"), relief="raised", width=16, height=1)
@@ -478,12 +478,12 @@ def open_secondary_window(image_selected):
         file_path = filedialog.askopenfilename(initialdir=fileDir, title="Choose a Latest Invocation",
                                                filetypes=(("Arquivos de texto", "*.txt"), ("Todos os arquivos", "*.*")))
         if file_path:
-            # Extrai o texto do arquivo selecionado
+            # Exttracts text from selected archive
             with open(file_path, 'r') as file:
                 text_from_file = file.read()
                 setUpLatestInvoRunBox(text_from_file)
         # else:
-        # print("Nenhum arquivo selecionado.")
+        # print("No archive selected.")
 
     def setUpLatestInvoRunBox(latestInvoCom):
         comBasis = image_data["invocation_general"]
@@ -498,7 +498,7 @@ def open_secondary_window(image_selected):
                          command=lambda: choose_LatestInvocation())
     liButton.place(relx=0.75, rely=0.9, anchor=tk.W)
 
-    def updateFullRunCom(directory_path, runCommandBasis):  # Adicionar verificação do directory Path
+    def updateFullRunCom(directory_path, runCommandBasis):  # checks path
         global fullRunCommand
         runParametersUser = runCTextBox.get("1.0", tk.END)
         runCommandBasisUpdated = runCommandBasis.replace(image_selected, selected_option.get())
@@ -532,30 +532,30 @@ def open_secondary_window(image_selected):
 
     def run_command(command):
         def update_text_box(line):
-            info_running_text_box.config(state="normal")  # Ativar para permitir a edição
-            info_running_text_box.insert("end", line + "\n")  # Adicionar texto
-            info_running_text_box.see("end")  # Rolagem automática para a parte inferior
-            info_running_text_box.config(state="disabled")  # Desativar novamente
+            info_running_text_box.config(state="normal")  # Activate to allow editing
+            info_running_text_box.insert("end", line + "\n")  # Adds text
+            info_running_text_box.see("end")  # Automated rulling
+            info_running_text_box.config(state="disabled")  # Disable
 
         start_time = time.time()
 
-        # Esconder o layout se necessário
+        # Hyde layout, if needed
         if hide_layout():
             hide_layout()
 
-        # Abrir o processo e ler a saída linha por linha
+        # Reads line by line
         process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                                    universal_newlines=True)
         for line in process.stdout:
-            update_text_box(line.strip())  # Atualizar a caixa de texto
+            update_text_box(line.strip())  # updates text box
 
-        # Aguardar até que o processo seja concluído
+        # Waits until process is finnished
         process.wait()
 
         end_time = time.time()
         runtime = end_time - start_time
 
-        # Mostra o butão para voltar tudo ao normal
+        # Swows the button again
         if display_b2NButton(runtime):
             display_b2NButton(runtime)
 
@@ -565,12 +565,12 @@ def open_secondary_window(image_selected):
         thread = threading.Thread(target=run_command, args=(run_Com,))
         thread.start()
 
-    # Butão de Run
+    # Run button
     runButton = tk.Button(secondary_window, text="Run", bg="#3498db", fg="white", font=("Helvetica", 10, "bold"),
                           relief="raised", width=16, height=1, command=lambda: run_button())
     runButton.place(relx=0.2, rely=0.96, anchor=tk.CENTER)
 
-    # Função que cria um file dentro de um certo diretório com o nome da imagem atual
+    # Creates file in selecred directory with current image name
     def create_file_in_folder(parent_folder, folder_name, file_name, content, file_type):
         folder_path = os.path.join(parent_folder, folder_name)
         folder_path = "/data" + folder_path
@@ -578,27 +578,26 @@ def open_secondary_window(image_selected):
             os.makedirs(folder_path)
 
         current_time = datetime.now().strftime("_%d-%m-%Y_%Hh%Mm%Ss")
-        fileTimeName = file_name + current_time + file_type  # Acrescentei aqui o file type para reutilizalão de codigo
+        fileTimeName = file_name + current_time + file_type
         file_path = os.path.join(folder_path, fileTimeName)
 
         with open(file_path, 'w') as file:
             file.write(content)
 
-    # Executable File, alterado para agora criar um ficheiro .sh
+    # Creates an .sh file
     shButton = tk.Button(secondary_window, text="Create executable file", bg="#3498db", fg="white",
                          font=("Helvetica", 10, "bold"), relief="raised", width=16, height=1,
                          command=lambda: create_file_in_folder(folderExecutFiles, folderImageSelectedEXE,
                                                                image_selected, run_CheckIfTestInvo(), ".sh"))
     shButton.place(relx=0.7, rely=0.96, anchor=tk.CENTER)
 
-    # Secção com as partes para quando estiver a correr a imagem Docker
-    # Mostra que esta a correr
+    # Shows that iamge is running
     running_text = tk.Label(secondary_window, text="Running:", fg="black", font=("sans-serif", 25))
-    # Criar uma caixa de texto grande não interativa
+    # Creates a non-interactive text box
     info_running_text_box = tk.Text(secondary_window, state=tk.DISABLED, height=30, width=55)
     b2Norma_button = tk.Button(secondary_window, text="Okay", bg="#3498db", fg="white", font=("Helvetica", 10, "bold"),
                                relief="raised", width=16, height=1,
-                               command=lambda: display_layout())  # abre os docs das imagens
+                               command=lambda: display_layout())  # Opens image documentation
     runtime_Label = tk.Label(secondary_window, fg="black", font=("sans-serif", 15))
 
     def hide_layout():
@@ -638,8 +637,8 @@ def open_secondary_window(image_selected):
 
     def display_b2NButton(runtime):
         runtime_Label.configure(text="Runtime:\n" + str(runtime) + " seconds")
-        runtime_Label.place(relx=0.5, rely=0.9, anchor=tk.CENTER)  # Mostra o tempo de execução
-        b2Norma_button.place(relx=0.5, rely=0.965, anchor=tk.CENTER)  # Butão para voltar tudo ao normal
+        runtime_Label.place(relx=0.5, rely=0.9, anchor=tk.CENTER)  # Shows execution time
+        b2Norma_button.place(relx=0.5, rely=0.965, anchor=tk.CENTER)  # Button to get to default state
 
     def display_layout():
         running_text.place_forget()

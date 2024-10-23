@@ -60,13 +60,3 @@ def delete_docker_image(image_id):
         print("Error:", e)
         return False
 
-# # Exemplo de uso
-# docker_images = get_docker_images()
-# image_status = check_images_usage(docker_images)
-
-# for image in docker_images:
-#     image_id = image["IMAGE ID"]
-#     if image_status.get(image_id):
-#         print(f"Image {image_id} is in use.")
-#     else:
-#         print(f"Image {image_id} is not in use.")

@@ -7,17 +7,17 @@ Created on Wed Mar 20 09:45:30 2024
 
 
 def setUpRunCBox(command):
-    # Padrão a ser substituído
+    # Pattern to be replaced
     pattern = "/your/data/dir:/data "
-    # Encontrando a posição do padrão na string do comando
+    # Find the pattern position in string
     first_index = command.find(pattern)
-    # Se o padrão for encontrado
+    # If pattern is found
     if first_index != -1:
-        # Retornar a parte da string após o padrão
+        # Returns strig after the pattern
         final_command = command[first_index + len(pattern):]
         return final_command
     else:
-        # Se o padrão não for encontrado, retornar o comando original
+        # If pattern is not found return the original string
         return command
         
     
@@ -50,7 +50,7 @@ def convert_Ubuntu_In_Windows (unix_path):
     return ubuntu_path
     
 
-
+###### ????????????????????
 def remove_basis(fullRunCom, basis, image):
     index_pegi3s_gbif_gis = fullRunCom.find(image)   
     char_count = count_chars_from_pegi3s_to_end(basis)
@@ -65,14 +65,14 @@ def remove_basis(fullRunCom, basis, image):
     return updated_fullRunCom
 
 def count_chars_from_pegi3s_to_end(basis):
-    # Encontra a posição de "pegi3s" na base
+    # Find position of "pegi3s" at the base
     index_pegi3s = basis.find("pegi3s")
 
-    # Se "pegi3s" não for encontrado na base, retorna 0
+    # If "pegi3s" is not found returns 0
     if index_pegi3s == -1:
         return 0
 
-    # Conta o número de caracteres a partir de "pegi3s" até o final da base
+    # Counts the number of characters from "pegi3s" until the end of the base
     chars_count = len(basis[index_pegi3s:])
 
     return chars_count

@@ -1,17 +1,17 @@
 def separate_text_by_indentation(text):
     lines = text.split('\n')
-    matrix = [[]]  # Inicia a matriz
+    matrix = [[]]  # Matrix initialization
     stack = [matrix[0]]
     current_level = 0
 
-    for line in lines: #vai ver linha a linha
-        if not line.strip(): #para evitar ler linhas em branco
+    for line in lines:
+        if not line.strip(): # avoids reading blank lines 
             continue
 
         indent_level = line.count('\t')
         line_content = line.strip()
 
-        # Organiza a estrutura
+        # Organize the structure
         while indent_level < current_level:
             stack.pop()
             current_level -= 1
@@ -21,7 +21,7 @@ def separate_text_by_indentation(text):
             stack[-1].append(sub_list)
             stack.append(sub_list)
 
-        # Adiciona lista
+        # Add list
         stack[-1].append(line_content)
 
     return matrix
@@ -34,7 +34,7 @@ def findImageVersions (image, imageList):
             continue
         if image in line:
             image_index = line.index(image)
-            # Verificar se o "-" está imediatamente após o nome da imagem
+            # check if "-" is immediately after the image name
             if line[image_index + len(image)] == "-":
                 continue
             image_parts = line.split(":")
