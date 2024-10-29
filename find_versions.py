@@ -1,3 +1,5 @@
+#Finds Docker image versions. Used in the secondary window menu
+
 def separate_text_by_indentation(text):
     lines = text.split('\n')
     matrix = [[]]  # Matrix initialization

@@ -1,10 +1,6 @@
 # -*- coding: utf-8 -*-
-"""
-Created on Wed Jun  5 11:15:17 2024
 
-@author: diogo
-"""
-
+# Nested menu used in main window
 
 class Term:
     def __init__(self, term_id, name, definition, is_a):

@@ -1,9 +1,4 @@
 # -*- coding: utf-8 -*-
-"""
-Created on Thu Feb 22 09:46:17 2024
-
-@author: diogo
-"""
 
 import json
 import os
@@ -18,27 +13,17 @@ from tkinter import messagebox
 
 import requests
 
-import runCommandFunctions
-from functionsForImagesOptions import findImageVersions
+import prepare_docker_command
+from find_versions import findImageVersions
 
 def open_secondary_window(image_selected):
-    # # Carregar o JSON
-    # json_url = "https://raw.githubusercontent.com/pegi3s/dockerfiles/master/metadata/metadata.json"
-    # json_response= requests.get(json_url)
 
-    # if json_response.status_code == 200:
-    #     # Get the content of the file as bytes
-    #     json_data = json_response.content
-    #     # If the content is text, decode it
-    #     imagens_docker = json_data.decode('utf-8')
-    # else:
-    #     print(f"Failed to get the file. Status code: {json_response.status_code}")
-
-    with open('novoJson.txt', 'rb') as file:
+    with open('JSON', 'rb') as file:
         imagens_docker = json.load(file)
-
+        
+    # Get data for selected image
     image_data = next(
-        image for image in imagens_docker if image["name"] == image_selected)  # Dados da imagem correspondente ao nome
+        image for image in imagens_docker if image["name"] == image_selected)
 
     # Function to handle file selection
     def choose_file(entry):
@@ -49,7 +34,7 @@ def open_secondary_window(image_selected):
 
     # Create secondary (or popup) window.
     secondary_window = tk.Toplevel()
-    secondary_window.title("Secondary Window")
+    secondary_window.title("Run Docker Image")
     secondary_window.config(width=700, height=817)
 
     # Títle page
@@ -80,7 +65,7 @@ def open_secondary_window(image_selected):
         imagePullsList = response.text
         imageVersions = findImageVersions(image_selected, imagePullsList)
     else:
-        print("Falha ao buscar o texto.")
+        print("Something went wrong!")
 
     for imageVersion in imageVersions:
         if imageVersion != "latest":
@@ -119,10 +104,10 @@ def open_secondary_window(image_selected):
         file_path = file_path.replace("/data", "", 1)
         rumParamsNoInput = runCTextBox.get("1.0", tk.END)
         try:
-            runParamsWithInput = runCommandFunctions.set_up_Input_Name(rumParamsNoInput, prevInputName, file_path,
+            runParamsWithInput = prepare_docker_command.set_up_Input_Name(rumParamsNoInput, prevInputName, file_path,
                                                                        "/" + file_type + "File")
         except NameError:
-            runParamsWithInput = runCommandFunctions.set_up_Input_Name(rumParamsNoInput, "/" + file_type + "File",
+            runParamsWithInput = prepare_docker_command.set_up_Input_Name(rumParamsNoInput, "/" + file_type + "File",
                                                                        file_path, "/" + file_type + "File")
         prevInputName = file_path
         runCTextBox.delete("1.0", tk.END)
@@ -143,10 +128,10 @@ def open_secondary_window(image_selected):
 
         canvas_warning.tag_bind(canvas_circle, "<Button-1>",
                                 lambda event, canvas=canvas_warning, x=x, y=y: show_context_menu_tooltip(event,
-                                                                                                         "Change the directory path on the parameters box of the other file types"))
+                                                                                                         "Manually change the input file path for the files for which tehre is no input button"))
         canvas_warning.tag_bind(canvas_text, "<Button-1>",
                                 lambda event, canvas=canvas_warning, x=x, y=y: show_context_menu_tooltip(event,
-                                                                                                         "Change the directory path on the parameters box of the other file types"))
+                                                                                                         "Manually change the input file path for the files for which tehre is no input button"))
 
     # Creating buttons and test boxes
     butSelectFileType1 = tk.Button(secondary_window, bg="#3498db", fg="white", font=("Helvetica", 10, "bold"),
@@ -198,7 +183,7 @@ def open_secondary_window(image_selected):
                 input_label.update()
                 warningmore3FileTypes(input_label.winfo_x(), input_label.winfo_y(), input_label.winfo_width(), canvas)
 
-    #################### DOCUMENT INPUT  ##############################
+    # User input
     input_label = tk.Label(secondary_window, text="Input", fg="black", font=("sans-serif", 12))
     input_label.place(relx=0.05, rely=0.2, anchor=tk.W)
 
@@ -223,7 +208,7 @@ def open_secondary_window(image_selected):
             output_text_box.configure(fg="grey")
 
     output_text_box = tk.Text(secondary_window, width=60, fg="grey", height=1)
-    output_text_box.insert("1.0", "Output File Name")  # Texto dentro da caixa
+    output_text_box.insert("1.0", "Output File Name")  # Text within the box
     output_text_box.bind("<FocusIn>", on_output_entry_click)
     output_text_box.bind("<FocusOut>", on_output_focus_out)
     output_text_box.place(relx=0.05, rely=0.45, anchor=tk.W)
@@ -231,7 +216,7 @@ def open_secondary_window(image_selected):
 
     # Check if there are spaces in output_name (none allowed)
     def contains_space(s):
-        return " " in s
+        return " " in s      
 
     # Global Variable
     prevOutputName = None
@@ -249,10 +234,10 @@ def open_secondary_window(image_selected):
             rumParamsNotUpdated = runCTextBox.get("1.0", tk.END)
             try:
                 print(prevOutputName)
-                runParamUpdated = runCommandFunctions.set_up_Ouput_Name(rumParamsNotUpdated, prevOutputName,
+                runParamUpdated = prepare_docker_command.set_up_Ouput_Name(rumParamsNotUpdated, prevOutputName,
                                                                         newOutputName)
             except NameError:
-                runParamUpdated = runCommandFunctions.set_up_Ouput_Name(rumParamsNotUpdated, "outputFolder",
+                runParamUpdated = prepare_docker_command.set_up_Ouput_Name(rumParamsNotUpdated, "outputFolder",
                                                                         newOutputName)
             prevOutputName = newOutputName
             runCTextBox.delete("1.0", tk.END)
@@ -267,7 +252,7 @@ def open_secondary_window(image_selected):
     def on_closing():
         global prevOutputName
         prevOutputName = None
-        print("Morreu")
+        print("Something bad happened")
         secondary_window.destroy()
 
     # Bind the closing event of the secondary window
@@ -287,7 +272,7 @@ def open_secondary_window(image_selected):
     dn_notWork = image_data["not_working"]
     dn_noLTested = image_data["no_longer_tested"]
     dn_recLastTest = image_data["recommended_last_tested"]
-    dn_comments = image_data["comments"]  #
+    dn_comments = image_data["comments"]
     # Convert lists to strings
     dn_UseVer_str = ", ".join(dn_UseVer)
     dn_bug_str = ", ".join(dn_bug)
@@ -331,14 +316,13 @@ def open_secondary_window(image_selected):
     # Section to get info from the config file. Dir that is obtained is the directory that is gonna be placed inside the run command, plus latest invo and user_notes
     with open("/data/config", "r") as file:
         config_data = file.read()
-        # Dividir a string nos delimitadores ',' e '='
         parts = config_data.split('\n')
 
         # Variables Initialization
         run_dir_path = None
-        past_invocations_path = None
-        user_notes_path = None
-        executable_file_path = None
+        past_invocations_path = "/Docker_notebook/Latest_Invocations"
+        user_notes_path = "/Docker_notebook/User_Notes/"
+        executable_file_path = "/Docker_notebook/Latest_Invocations"
 
     # Process each part to extract values
     for part in parts:
@@ -348,12 +332,6 @@ def open_secondary_window(image_selected):
                 key, value = key_value
                 if key == 'dir':
                     run_dir_path = value
-                elif key == 'past_invocations':
-                    past_invocations_path = value
-                elif key == 'user_notes':
-                    user_notes_path = value
-                elif key == 'executable_files':
-                    executable_file_path = value
                 else:
                     print(f"Unknown key: {key}")
             else:
@@ -361,36 +339,15 @@ def open_secondary_window(image_selected):
         else:
             print(f"Skipping invalid entry (no '=' found): {part}")
 
-
-    def create_folder_if_not_exists(parent_folder, folder_name):
-        folder_path = os.path.join(parent_folder, folder_name)
-        folder_path = "/data" + folder_path
-        print(folder_path)
-        if not os.path.exists(folder_path):
-            print("Folder Created = " + folder_path)
-            os.makedirs(folder_path)
-        else:
-            print(f"Folder '{folder_name}' already exists in '{parent_folder}' folder.")
-
-    # folderUserNotes = os.getcwd() + "/User_Notes"
-    create_folder_if_not_exists(user_notes_path, "User_Notes")
-
-    # Check and if needed creates a Latest_Invocations folder
-    create_folder_if_not_exists(past_invocations_path, "Latest_Invocations")
-
-    # Check and if needed creates an Executable_Files folder
-    create_folder_if_not_exists(executable_file_path, "Executable_Files")
-
-    # Check if there are latest invocations for selected iamge
-    folderLatestInvo = past_invocations_path + "/Latest_Invocations"
+    folderLatestInvo = past_invocations_path + image_selected
     folderImageSelectedLI = image_selected + "_LatestInvocations"
 
-    # Check if there are latest invocations for selected iamge in executable files
-    folderExecutFiles = past_invocations_path + "/Executable_Files"
+    # Check if there are latest invocations for selected image in executable files
+    folderExecutFiles = executable_file_path + "/Executable_Files"
     folderImageSelectedEXE = image_selected + "_Executable_Files"
 
     def load_user_notes():
-        file_path = os.path.join("/data", user_notes_path, "User_Notes", image_selected + ".txt")
+        file_path = os.path.join("/data", user_notes_path, image_selected + ".txt")
         file_path = "/data" + file_path
         if os.path.exists(file_path):
             with open(file_path, "r", encoding="utf-8") as file:
@@ -398,7 +355,7 @@ def open_secondary_window(image_selected):
                 unTextBox.insert(tk.END, content)
 
     def save_user_notes():
-        file_path = os.path.join(user_notes_path, "User_Notes", image_selected + ".txt")
+        file_path = os.path.join(user_notes_path, image_selected + ".txt")
         file_path = "/data" + file_path
         with open(file_path, "w", encoding="utf-8") as file:
             content = unTextBox.get("1.0", tk.END)
@@ -446,7 +403,7 @@ def open_secondary_window(image_selected):
     runCTextBox.place(relx=0.05, rely=0.87, anchor=tk.W)
     runCommandBasis = image_data["invocation_general"]
     parametersCom = image_data["usual_invocation_specific"]
-    # displayRunC = runCommandFunctions.setUpRunCBox(runCommand)
+    # displayRunC = prepare_docker_command.setUpRunCBox(runCommand)
     if parametersCom == "":
         runCTextBox.insert(tk.END, "This image doesnt require user input")
         runCTextBox.config(state=tk.DISABLED)
@@ -455,13 +412,8 @@ def open_secondary_window(image_selected):
 
     def get_text_data_invocation_command():
         global fullRunCommand
-        # Via dar set up ao test_data_invocation depednendo do diretorio
         text_Data_com = image_data["test_invocation_specific"]
-        # if directory_entry.get() == "":
-        text_Data_dir = runCommandFunctions.setUpTestDataInvo(run_dir_path, text_Data_com)
-        # else:
-        #     real_dir_path = directory_entry.get()
-        #     text_Data_dir = runCommandFunctions.setUpTestDataInvo(real_dir_path, text_Data_com)
+        text_Data_dir = prepare_docker_command.setUpTestDataInvo(run_dir_path, text_Data_com)
         fullRunCommand = text_Data_dir
         runCTextBox.delete("1.0", tk.END)
         runCTextBox.insert(tk.END, text_Data_dir)
@@ -473,22 +425,20 @@ def open_secondary_window(image_selected):
     tdButton.place(relx=0.75, rely=0.84, anchor=tk.W)
 
     def choose_LatestInvocation():
-        create_folder_if_not_exists(folderLatestInvo, folderImageSelectedLI)
-        fileDir = "/data" + past_invocations_path + "/Latest_Invocations" + "/" + image_selected + "_LatestInvocations"
+        fileDir = "/data" + past_invocations_path + "/" + image_selected
+        
+        
         file_path = filedialog.askopenfilename(initialdir=fileDir, title="Choose a Latest Invocation",
-                                               filetypes=(("Arquivos de texto", "*.txt"), ("Todos os arquivos", "*.*")))
+                                               filetypes=(("Text files", "*.txt"), ("All", "*.*")))
         if file_path:
             # Exttracts text from selected archive
             with open(file_path, 'r') as file:
                 text_from_file = file.read()
                 setUpLatestInvoRunBox(text_from_file)
-        # else:
-        # print("No archive selected.")
 
     def setUpLatestInvoRunBox(latestInvoCom):
         comBasis = image_data["invocation_general"]
-        # latInvoUpdCom = latestInvoCom.replace(comBasis, "")
-        lastInvoUpdCom = runCommandFunctions.remove_basis(latestInvoCom, comBasis, "pegi3s/" + image_selected)
+        lastInvoUpdCom = prepare_docker_command.remove_basis(latestInvoCom, comBasis, "pegi3s/" + image_selected)
         runCTextBox.delete("1.0", tk.END)
         runCTextBox.insert(tk.END, lastInvoUpdCom)
 
@@ -502,20 +452,14 @@ def open_secondary_window(image_selected):
         global fullRunCommand
         runParametersUser = runCTextBox.get("1.0", tk.END)
         runCommandBasisUpdated = runCommandBasis.replace(image_selected, selected_option.get())
-        fullRunCommand = runCommandFunctions.createFullRunC(directory_path, runCommandBasisUpdated, runParametersUser)
+        fullRunCommand = prepare_docker_command.createFullRunC(directory_path, runCommandBasisUpdated, runParametersUser)
 
-    updateFullRunCom(run_dir_path, runCommandBasis)  # Util para comando sem parametros
+    updateFullRunCom(run_dir_path, runCommandBasis)  # Useful for Docker images without parameters
 
-    # Esta secção tem muit codigo morto, em teoria, apenas funciona com a parte do else da forma como alterei o código
     def run_CheckIfTestInvo():
         user_Input = runCTextBox.get("1.0", tk.END)
         test_Data_Invo = image_data["test_invocation_specific"]
-        # if directory_entry.get() == "":
-        test_Data_Invo_Upd = runCommandFunctions.setUpTestDataInvo(run_dir_path, test_Data_Invo)
-        # else:
-        #     real_dir_path = directory_entry.get()
-        #     test_Data_Invo_Upd = runCommandFunctions.setUpTestDataInvo(real_dir_path, test_Data_Invo)
-        # test_Data_Invo_Upd = runCommandFunctions.setUpTestDataInvo(directory_path, test_Data_Invo) #Adicionar verificação do directory path
+        test_Data_Invo_Upd = prepare_docker_command.setUpTestDataInvo(run_dir_path, test_Data_Invo)
         if user_Input == test_Data_Invo_Upd:
             print("TEST DATA INVO: /n" + test_Data_Invo_Upd)
             return test_Data_Invo_Upd
@@ -573,7 +517,7 @@ def open_secondary_window(image_selected):
     # Creates file in selecred directory with current image name
     def create_file_in_folder(parent_folder, folder_name, file_name, content, file_type):
         folder_path = os.path.join(parent_folder, folder_name)
-        folder_path = "/data" + folder_path
+    
         if not os.path.exists(folder_path):
             os.makedirs(folder_path)
 
@@ -584,14 +528,23 @@ def open_secondary_window(image_selected):
         with open(file_path, 'w') as file:
             file.write(content)
 
-    # Creates an .sh file
-    shButton = tk.Button(secondary_window, text="Create executable file", bg="#3498db", fg="white",
-                         font=("Helvetica", 10, "bold"), relief="raised", width=16, height=1,
-                         command=lambda: create_file_in_folder(folderExecutFiles, folderImageSelectedEXE,
-                                                               image_selected, run_CheckIfTestInvo(), ".sh"))
+    # Create executable file button
+    def create_file_in_two_places():
+        # First location
+        create_file_in_folder("/data/Docker_notebook/", "Executable_Files", image_selected, run_CheckIfTestInvo(), ".sh")
+    
+        # Second location
+        create_file_in_folder("/data/Docker_notebook/Latest_Invocations/", image_selected, image_selected, run_CheckIfTestInvo(), ".sh")
+
+    # Create executable file button
+    shButton = tk.Button(
+        secondary_window, text="Create executable file", bg="#3498db", fg="white",
+        font=("Helvetica", 10, "bold"), relief="raised", width=16, height=1,
+        command=lambda: create_file_in_two_places()  # Set the combined function as the command
+        )                                                           
     shButton.place(relx=0.7, rely=0.96, anchor=tk.CENTER)
 
-    # Shows that iamge is running
+    # Shows that image is running
     running_text = tk.Label(secondary_window, text="Running:", fg="black", font=("sans-serif", 25))
     # Creates a non-interactive text box
     info_running_text_box = tk.Text(secondary_window, state=tk.DISABLED, height=30, width=55)
@@ -605,12 +558,7 @@ def open_secondary_window(image_selected):
         menu_button.place_forget()
         docButtton.place_forget()
         pegi3sButton.place_forget()
-        # select_dir_label.place_forget()
-        # directory_choose_button.place_forget()
-        # directory_entry.place_forget()
         input_label.place_forget()
-        # input_choose_button.place_forget()
-        # input_entry.place_forget()
         output_label.place_forget()
         output_text_box.place_forget()
         dnLABEL.place_forget()
@@ -649,12 +597,7 @@ def open_secondary_window(image_selected):
         menu_button.place(relx=0.85, rely=0.04, anchor=tk.NE)
         docButtton.place(relx=0.3, rely=0.14, anchor=tk.CENTER)
         pegi3sButton.place(relx=0.7, rely=0.14, anchor=tk.CENTER)
-        # select_dir_label.place(relx=0.05, rely=0.2, anchor=tk.W)
-        # directory_choose_button.place(relx=0.05, rely=0.25, anchor=tk.W, width=100)
-        # directory_entry.place(relx=0.3, rely=0.25, anchor=tk.W)
         input_label.place(relx=0.05, rely=0.2, anchor=tk.W)
-        # input_choose_button.place(relx=0.05, rely=0.35, anchor=tk.W, width=100)
-        # input_entry.place(relx=0.3, rely=0.35, anchor=tk.W)
         output_label.place(relx=0.05, rely=0.4, anchor=tk.W)
         output_text_box.place(relx=0.05, rely=0.45, anchor=tk.W)
         dnLABEL.place(relx=0.05, rely=0.5, anchor=tk.W)

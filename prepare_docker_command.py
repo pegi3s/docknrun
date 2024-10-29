@@ -1,10 +1,6 @@
 # -*- coding: utf-8 -*-
-"""
-Created on Wed Mar 20 09:45:30 2024
 
-@author: diogo
-"""
-
+# Functions for building the Docker command
 
 def setUpRunCBox(command):
     # Pattern to be replaced
@@ -13,7 +9,7 @@ def setUpRunCBox(command):
     first_index = command.find(pattern)
     # If pattern is found
     if first_index != -1:
-        # Returns strig after the pattern
+        # Returns string after the pattern
         final_command = command[first_index + len(pattern):]
         return final_command
     else:
@@ -34,7 +30,6 @@ def setUpTestDataInvo(directory, test_Data_Com):
     testDataComUpdate = test_Data_Com.replace(pattern, directory_unix)
     return testDataComUpdate
 
-    
 def convert_to_unix_style_path(windows_path):
     # Replace backslashes with forward slashes
     unix_path = windows_path.replace('\\', '/')
@@ -49,18 +44,16 @@ def convert_Ubuntu_In_Windows (unix_path):
     ubuntu_path = prefix + unix_path
     return ubuntu_path
     
-
-###### ????????????????????
 def remove_basis(fullRunCom, basis, image):
-    index_pegi3s_gbif_gis = fullRunCom.find(image)   
+    index_pegi3s = fullRunCom.find(image)   
     char_count = count_chars_from_pegi3s_to_end(basis)
 
-    # Se "pegi3s/gbif_gis" não for encontrado, retorna uma mensagem de erro
-    if index_pegi3s_gbif_gis == -1:
-        return "Erro: 'pegi3s/gbif_gis' não encontrado no fullRunCom."
+    # If Docker image name not found
+    if index_pegi3s == -1:
+        return "Error: Docker image name not found"
 
-    # Remove tudo até "pegi3s/gbif_gis"
-    updated_fullRunCom = fullRunCom[index_pegi3s_gbif_gis + char_count:]
+    # Removes everything up to Docker image name
+    updated_fullRunCom = fullRunCom[index_pegi3s + char_count:]
     
     return updated_fullRunCom
 
@@ -86,6 +79,3 @@ def set_up_Input_Name(runParams, prevInputName, newInputName, fileType):
     runParamsWithInput = runParams.replace(fileType, newInputName)
     runParamsWithInput = runParams.replace(prevInputName, newInputName)
     return runParamsWithInput
-    
-
-
