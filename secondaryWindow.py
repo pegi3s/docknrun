@@ -20,7 +20,7 @@ def open_secondary_window(image_selected):
 
     with open('JSON', 'rb') as file:
         imagens_docker = json.load(file)
-        
+
     # Get data for selected image
     image_data = next(
         image for image in imagens_docker if image["name"] == image_selected)
@@ -216,7 +216,7 @@ def open_secondary_window(image_selected):
 
     # Check if there are spaces in output_name (none allowed)
     def contains_space(s):
-        return " " in s      
+        return " " in s
 
     # Global Variable
     prevOutputName = None
@@ -239,6 +239,9 @@ def open_secondary_window(image_selected):
             except NameError:
                 runParamUpdated = prepare_docker_command.set_up_Ouput_Name(rumParamsNotUpdated, "outputFolder",
                                                                         newOutputName)
+
+            os.makedirs(f"/data/{newOutputName}", exist_ok=True)
+
             prevOutputName = newOutputName
             runCTextBox.delete("1.0", tk.END)
             runCTextBox.insert(tk.END, runParamUpdated)
@@ -426,8 +429,8 @@ def open_secondary_window(image_selected):
 
     def choose_LatestInvocation():
         fileDir = "/data" + past_invocations_path + "/" + image_selected
-        
-        
+
+
         file_path = filedialog.askopenfilename(initialdir=fileDir, title="Choose a Latest Invocation",
                                                filetypes=(("Text files", "*.txt"), ("All", "*.*")))
         if file_path:
@@ -517,7 +520,7 @@ def open_secondary_window(image_selected):
     # Creates file in selecred directory with current image name
     def create_file_in_folder(parent_folder, folder_name, file_name, content, file_type):
         folder_path = os.path.join(parent_folder, folder_name)
-    
+
         if not os.path.exists(folder_path):
             os.makedirs(folder_path)
 
@@ -532,7 +535,7 @@ def open_secondary_window(image_selected):
     def create_file_in_two_places():
         # First location
         create_file_in_folder("/data/Docker_notebook/", "Executable_Files", image_selected, run_CheckIfTestInvo(), ".sh")
-    
+
         # Second location
         create_file_in_folder("/data/Docker_notebook/Latest_Invocations/", image_selected, image_selected, run_CheckIfTestInvo(), ".sh")
 
@@ -541,7 +544,7 @@ def open_secondary_window(image_selected):
         secondary_window, text="Create executable file", bg="#3498db", fg="white",
         font=("Helvetica", 10, "bold"), relief="raised", width=16, height=1,
         command=lambda: create_file_in_two_places()  # Set the combined function as the command
-        )                                                           
+        )
     shButton.place(relx=0.7, rely=0.96, anchor=tk.CENTER)
 
     # Shows that image is running
