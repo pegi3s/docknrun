@@ -430,9 +430,10 @@ def open_secondary_window(image_selected):
     def choose_LatestInvocation():
         fileDir = "/data" + past_invocations_path + "/" + image_selected
 
+        os.makedirs(fileDir, exist_ok=True)
 
         file_path = filedialog.askopenfilename(initialdir=fileDir, title="Choose a Latest Invocation",
-                                               filetypes=(("Text files", "*.txt"), ("All", "*.*")))
+                                               filetypes=(("Text files", "*.sh"), ("All", "*.*")))
         if file_path:
             # Exttracts text from selected archive
             with open(file_path, 'r') as file:
