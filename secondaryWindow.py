@@ -510,9 +510,9 @@ def open_secondary_window(image_selected):
         #     display_b2NButton(runtime)
 
     def run_button():
-        run_Com = run_CheckIfTestInvo()
-        create_file_in_folder(folderLatestInvo, folderImageSelectedLI, image_selected, run_CheckIfTestInvo(), ".txt")
-        thread = threading.Thread(target=run_command, args=(run_Com,))
+        command = run_CheckIfTestInvo()
+        create_file_in_folder(folderLatestInvo, folderImageSelectedLI, image_selected, command, ".sh")
+        thread = threading.Thread(target=run_command, args=(command,))
         thread.start()
 
     # Run button
