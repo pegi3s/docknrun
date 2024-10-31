@@ -27,7 +27,7 @@ def open_secondary_window(image_selected):
 
     # Function to handle file selection
     def choose_file(entry):
-        file_path = filedialog.askopenfilename(initialdir="/data")
+        file_path = filedialog.askopenfilename(parent=secondary_window, initialdir="/data")
         entry.delete(0, "end")  # Clear any existing text
         entry.insert(0, file_path)  # Insert the selected file path
         return file_path
