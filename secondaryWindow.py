@@ -4,7 +4,6 @@ import json
 import os
 import subprocess
 import threading
-import time
 import tkinter as tk
 import webbrowser
 from datetime import datetime
@@ -15,9 +14,10 @@ import requests
 
 import prepare_docker_command
 from find_versions import findImageVersions
+from run_window import open_run_window
+
 
 def open_secondary_window(image_selected):
-
     with open('JSON', 'rb') as file:
         imagens_docker = json.load(file)
 
@@ -105,10 +105,10 @@ def open_secondary_window(image_selected):
         rumParamsNoInput = runCTextBox.get("1.0", tk.END)
         try:
             runParamsWithInput = prepare_docker_command.set_up_Input_Name(rumParamsNoInput, prevInputName, file_path,
-                                                                       "/" + file_type + "File")
+                                                                          "/" + file_type + "File")
         except NameError:
             runParamsWithInput = prepare_docker_command.set_up_Input_Name(rumParamsNoInput, "/" + file_type + "File",
-                                                                       file_path, "/" + file_type + "File")
+                                                                          file_path, "/" + file_type + "File")
         prevInputName = file_path
         runCTextBox.delete("1.0", tk.END)
         runCTextBox.insert(tk.END, runParamsWithInput)
@@ -235,10 +235,10 @@ def open_secondary_window(image_selected):
             try:
                 print(prevOutputName)
                 runParamUpdated = prepare_docker_command.set_up_Ouput_Name(rumParamsNotUpdated, prevOutputName,
-                                                                        newOutputName)
+                                                                           newOutputName)
             except NameError:
                 runParamUpdated = prepare_docker_command.set_up_Ouput_Name(rumParamsNotUpdated, "outputFolder",
-                                                                        newOutputName)
+                                                                           newOutputName)
 
             os.makedirs(f"/data/{newOutputName}", exist_ok=True)
 
@@ -456,7 +456,8 @@ def open_secondary_window(image_selected):
         global fullRunCommand
         runParametersUser = runCTextBox.get("1.0", tk.END)
         runCommandBasisUpdated = runCommandBasis.replace(image_selected, selected_option.get())
-        fullRunCommand = prepare_docker_command.createFullRunC(directory_path, runCommandBasisUpdated, runParametersUser)
+        fullRunCommand = prepare_docker_command.createFullRunC(directory_path, runCommandBasisUpdated,
+                                                               runParametersUser)
 
     updateFullRunCom(run_dir_path, runCommandBasis)  # Useful for Docker images without parameters
 
@@ -479,33 +480,34 @@ def open_secondary_window(image_selected):
         subprocess.run("xhost +", shell=True, check=True)
 
     def run_command(command):
-        def update_text_box(line):
-            info_running_text_box.config(state="normal")  # Activate to allow editing
-            info_running_text_box.insert("end", line + "\n")  # Adds text
-            info_running_text_box.see("end")  # Automated rulling
-            info_running_text_box.config(state="disabled")  # Disable
+        open_run_window(secondary_window, command)
 
-        start_time = time.time()
-
-        # Hyde layout, if needed
-        if hide_layout():
-            hide_layout()
-
-        # Reads line by line
-        process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-                                   universal_newlines=True)
-        for line in process.stdout:
-            update_text_box(line.strip())  # updates text box
-
-        # Waits until process is finnished
-        process.wait()
-
-        end_time = time.time()
-        runtime = end_time - start_time
-
-        # Swows the button again
-        if display_b2NButton(runtime):
-            display_b2NButton(runtime)
+        # def update_text_box(line):
+        #     info_running_text_box.config(state="normal")  # Activate to allow editing
+        #     info_running_text_box.insert("end", line + "\n")  # Adds text
+        #     info_running_text_box.see("end")  # Automated rulling
+        #     info_running_text_box.config(state="disabled")  # Disable
+        # start_time = time.time()
+        #
+        # # Hyde layout, if needed
+        # if hide_layout():
+        #     hide_layout()
+        #
+        # # Reads line by line
+        # process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+        #                            universal_newlines=True)
+        # for line in process.stdout:
+        #     update_text_box(line.strip())  # updates text box
+        #
+        # # Waits until process is finnished
+        # process.wait()
+        #
+        # end_time = time.time()
+        # runtime = end_time - start_time
+        #
+        # # Swows the button again
+        # if display_b2NButton(runtime):
+        #     display_b2NButton(runtime)
 
     def run_button():
         run_Com = run_CheckIfTestInvo()
@@ -535,86 +537,17 @@ def open_secondary_window(image_selected):
     # Create executable file button
     def create_file_in_two_places():
         # First location
-        create_file_in_folder("/data/Docker_notebook/", "Executable_Files", image_selected, run_CheckIfTestInvo(), ".sh")
+        create_file_in_folder("/data/Docker_notebook/", "Executable_Files", image_selected, run_CheckIfTestInvo(),
+                              ".sh")
 
         # Second location
-        create_file_in_folder("/data/Docker_notebook/Latest_Invocations/", image_selected, image_selected, run_CheckIfTestInvo(), ".sh")
+        create_file_in_folder("/data/Docker_notebook/Latest_Invocations/", image_selected, image_selected,
+                              run_CheckIfTestInvo(), ".sh")
 
     # Create executable file button
     shButton = tk.Button(
         secondary_window, text="Create executable file", bg="#3498db", fg="white",
         font=("Helvetica", 10, "bold"), relief="raised", width=16, height=1,
         command=lambda: create_file_in_two_places()  # Set the combined function as the command
-        )
+    )
     shButton.place(relx=0.7, rely=0.96, anchor=tk.CENTER)
-
-    # Shows that image is running
-    running_text = tk.Label(secondary_window, text="Running:", fg="black", font=("sans-serif", 25))
-    # Creates a non-interactive text box
-    info_running_text_box = tk.Text(secondary_window, state=tk.DISABLED, height=30, width=55)
-    b2Norma_button = tk.Button(secondary_window, text="Okay", bg="#3498db", fg="white", font=("Helvetica", 10, "bold"),
-                               relief="raised", width=16, height=1,
-                               command=lambda: display_layout())  # Opens image documentation
-    runtime_Label = tk.Label(secondary_window, fg="black", font=("sans-serif", 15))
-
-    def hide_layout():
-        input_title_label.place_forget()
-        menu_button.place_forget()
-        docButtton.place_forget()
-        pegi3sButton.place_forget()
-        input_label.place_forget()
-        output_label.place_forget()
-        output_text_box.place_forget()
-        dnLABEL.place_forget()
-        dnTextBox.place_forget()
-        unLABEL.place_forget()
-        unTextBox.place_forget()
-        runCTextBox.place_forget()
-        runCLABEL.place_forget()
-        tdButton.place_forget()
-        liButton.place_forget()
-        runButton.place_forget()
-        shButton.place_forget()
-        output_choose_button.place_forget()
-        butSelectFileType1.place_forget()
-        butSelectFileType2.place_forget()
-        butSelectFileType3.place_forget()
-        frame_No_Input.place_forget()
-        canvas_warning.place_forget()
-        running_text.place(relx=0.5, rely=0.1, anchor=tk.CENTER)
-        info_running_text_box.place(relx=0.5, rely=0.5, anchor=tk.CENTER)
-        info_running_text_box.config(state="normal")  # Set state to normal to enable editing
-        info_running_text_box.delete("1.0", "end")  # Clear all text from the text box
-        info_running_text_box.config(state="disabled")  # Set state back to disabled to disable editing
-
-    def display_b2NButton(runtime):
-        runtime_Label.configure(text="Runtime:\n" + str(runtime) + " seconds")
-        runtime_Label.place(relx=0.5, rely=0.9, anchor=tk.CENTER)  # Shows execution time
-        b2Norma_button.place(relx=0.5, rely=0.965, anchor=tk.CENTER)  # Button to get to default state
-
-    def display_layout():
-        running_text.place_forget()
-        info_running_text_box.place_forget()
-        b2Norma_button.place_forget()
-        runtime_Label.place_forget()
-        input_title_label.place(relx=0.5, rely=0.05, anchor=tk.CENTER)
-        menu_button.place(relx=0.85, rely=0.04, anchor=tk.NE)
-        docButtton.place(relx=0.3, rely=0.14, anchor=tk.CENTER)
-        pegi3sButton.place(relx=0.7, rely=0.14, anchor=tk.CENTER)
-        input_label.place(relx=0.05, rely=0.2, anchor=tk.W)
-        output_label.place(relx=0.05, rely=0.4, anchor=tk.W)
-        output_text_box.place(relx=0.05, rely=0.45, anchor=tk.W)
-        dnLABEL.place(relx=0.05, rely=0.5, anchor=tk.W)
-        dnTextBox.place(relx=0.05, rely=0.57, anchor=tk.W)
-        unLABEL.place(relx=0.05, rely=0.64, anchor=tk.W)
-        unTextBox.place(relx=0.05, rely=0.71, anchor=tk.W)
-        runCTextBox.place(relx=0.05, rely=0.87, anchor=tk.W)
-        runCLABEL.place(relx=0.05, rely=0.79, anchor=tk.W)
-        tdButton.place(relx=0.75, rely=0.84, anchor=tk.W)
-        liButton.place(relx=0.75, rely=0.9, anchor=tk.W)
-        runButton.place(relx=0.2, rely=0.96, anchor=tk.CENTER)
-        shButton.place(relx=0.7, rely=0.96, anchor=tk.CENTER)
-        output_choose_button.place(x=output_text_box.winfo_x() + output_text_box.winfo_width() + 5,
-                                   y=output_text_box.winfo_y(), height=output_text_box.winfo_height())
-        if input_data_types is not None:
-            placeInputButtons(input_data_types, canvas_warning)
