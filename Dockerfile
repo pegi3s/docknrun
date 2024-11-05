@@ -12,7 +12,16 @@ RUN apt-get install -y python3-pyperclip
 RUN apt-get install -y firefox
 RUN apt-get install -y x11-xserver-utils
 RUN apt-get install -y xclip
+RUN apt-get install -y dbus-x11
 
+RUN \
+  FIREFOX_SETTING="/usr/lib/firefox/browser/defaults/preferences/firefox.js" && \
+  echo 'pref("datareporting.policy.firstRunURL", "");' > ${FIREFOX_SETTING} && \
+  echo 'pref("datareporting.policy.dataSubmissionEnabled", false);' >> ${FIREFOX_SETTING} && \
+  echo 'pref("datareporting.healthreport.service.enabled", false);' >> ${FIREFOX_SETTING} && \
+  echo 'pref("datareporting.healthreport.uploadEnabled", false);' >> ${FIREFOX_SETTING} && \
+  echo 'pref("trailhead.firstrun.branches", "nofirstrun-empty");' >> ${FIREFOX_SETTING} && \
+  echo 'pref("browser.aboutwelcome.enabled", false);' >> ${FIREFOX_SETTING}
 
 ENV DISPLAY=:0
 
@@ -30,7 +39,6 @@ COPY email_button.py /opt
 COPY docker_manager_button.py /opt
 COPY run_window.py /opt
 COPY secondaryWindow.py /opt
-
 
 WORKDIR /opt
 
