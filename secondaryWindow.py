@@ -9,6 +9,7 @@ import webbrowser
 from datetime import datetime
 from tkinter import filedialog
 from tkinter import messagebox
+from tkinter import scrolledtext
 
 import requests
 
@@ -266,7 +267,7 @@ def open_secondary_window(image_selected):
     dnLABEL.place(relx=0.05, rely=0.5, anchor=tk.W)
 
     # Text Box User Notes
-    dnTextBox = tk.Text(secondary_window, width=60, height=3.5)
+    dnTextBox = scrolledtext.ScrolledText(secondary_window, width=60, height=3.5)
     dnTextBox.place(relx=0.05, rely=0.57, anchor=tk.W)
 
     # This section is meant to populate the Developer Notes
@@ -313,7 +314,7 @@ def open_secondary_window(image_selected):
     unLABEL.place(relx=0.05, rely=0.64, anchor=tk.W)
 
     # Text Box User Notes
-    unTextBox = tk.Text(secondary_window, width=60, height=3.5)
+    unTextBox = scrolledtext.ScrolledText(secondary_window, width=60, height=3.5)
     unTextBox.place(relx=0.05, rely=0.71, anchor=tk.W)
 
     # Section to get info from the config file. Dir that is obtained is the directory that is gonna be placed inside the run command, plus latest invo and user_notes
