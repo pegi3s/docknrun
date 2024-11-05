@@ -16,6 +16,7 @@ import requests
 import prepare_docker_command
 from find_versions import findImageVersions
 from run_window import open_run_window
+from tooltip import ToolTip
 
 
 def open_secondary_window(image_selected):
@@ -370,23 +371,6 @@ def open_secondary_window(image_selected):
 
     secondary_window.protocol("WM_DELETE_WINDOW", save_user_notes)
 
-    def about_the_image_widget(x, y, width):
-        canvas = tk.Canvas(secondary_window, width=25, height=25)
-        canvas.place(x=x + width, y=y)
-
-        # Draw the circle
-        canvas_circle = canvas.create_oval(3, 3, 23, 23, fill="light blue", outline="black", width=2)
-
-        # Draw the question mark inside the circle
-        canvas_text = canvas.create_text(13, 13, text="?", font=("Helvetica", 12, "bold"), fill="black")
-
-        canvas.tag_bind(canvas_circle, "<Button-1>",
-                        lambda event, canvas=canvas, x=x, y=y: show_context_menu_tooltip(event,
-                                                                                         "Change the parameters below as you better see fit"))
-        canvas.tag_bind(canvas_text, "<Button-1>",
-                        lambda event, canvas=canvas, x=x, y=y: show_context_menu_tooltip(event,
-                                                                                         "Change the parameters below as you better see fit"))
-
     def show_context_menu_tooltip(event, text):
         # Create a context menu
         context_menu = tk.Menu(secondary_window, tearoff=0, background='light yellow', borderwidth=1, relief='solid',
@@ -398,9 +382,9 @@ def open_secondary_window(image_selected):
 
     # Create the title label for Text Box 2
     runCLABEL = tk.Label(secondary_window, text="Run command", fg="black", font=("sans-serif", 12))
+    ToolTip.for_widget(runCLABEL, "Change the parameters below as you better see fit")
     runCLABEL.place(relx=0.05, rely=0.79, anchor=tk.W)
     runCLABEL.update()
-    about_the_image_widget(runCLABEL.winfo_x(), runCLABEL.winfo_y(), runCLABEL.winfo_width())
 
     # Create the second text box
     runCTextBox = tk.Text(secondary_window, width=60, height=3.5)

@@ -39,6 +39,7 @@ COPY email_button.py /opt
 COPY docker_manager_button.py /opt
 COPY run_window.py /opt
 COPY secondaryWindow.py /opt
+COPY tooltip.py /opt
 
 WORKDIR /opt
 
