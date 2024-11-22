@@ -465,34 +465,9 @@ def open_secondary_window(image_selected):
         subprocess.run("xhost +", shell=True, check=True)
 
     def run_command(command):
-        open_run_window(secondary_window, command)
+        create_latest_invocation_script()
 
-        # def update_text_box(line):
-        #     info_running_text_box.config(state="normal")  # Activate to allow editing
-        #     info_running_text_box.insert("end", line + "\n")  # Adds text
-        #     info_running_text_box.see("end")  # Automated rulling
-        #     info_running_text_box.config(state="disabled")  # Disable
-        # start_time = time.time()
-        #
-        # # Hyde layout, if needed
-        # if hide_layout():
-        #     hide_layout()
-        #
-        # # Reads line by line
-        # process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-        #                            universal_newlines=True)
-        # for line in process.stdout:
-        #     update_text_box(line.strip())  # updates text box
-        #
-        # # Waits until process is finnished
-        # process.wait()
-        #
-        # end_time = time.time()
-        # runtime = end_time - start_time
-        #
-        # # Swows the button again
-        # if display_b2NButton(runtime):
-        #     display_b2NButton(runtime)
+        open_run_window(secondary_window, command)
 
     def run_button():
         command = run_CheckIfTestInvo()
@@ -525,6 +500,9 @@ def open_secondary_window(image_selected):
         create_file_in_folder("/data/Docker_notebook/", "Executable_Files", image_selected, run_CheckIfTestInvo(),
                               ".sh")
 
+        create_latest_invocation_script()
+
+    def create_latest_invocation_script():
         # Second location
         create_file_in_folder("/data/Docker_notebook/Latest_Invocations/", image_selected, image_selected,
                               run_CheckIfTestInvo(), ".sh")
