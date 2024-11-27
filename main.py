@@ -100,15 +100,29 @@ def update_button_text(option):
     else:
         handle_image_selection(option)
 
-def create_submenu(parent_menu, options):
-    submenu = Menu(parent_menu, tearoff=0)
+def create_submenu(parent_menu, options, max_options=20):
+    root_menu = Menu(parent_menu, tearoff=0)
+    submenu = root_menu
+
+    count_options = 0
     for option in options:
+        count_options += 1
+
+        if count_options >= max_options:
+            new_submenu = Menu(submenu, tearoff=0)
+            submenu.add_separator()
+            submenu.add_cascade(label="More...", menu=new_submenu)
+            submenu = new_submenu
+
+            count_options = 0
+
         if isinstance(option, dict):
             for key, value in option.items():
-                submenu.add_cascade(label=key, menu=create_submenu(submenu, value))
+                submenu.add_cascade(label=key, menu=create_submenu(submenu, value, max_options))
         else:
             submenu.add_command(label=option, command=lambda opt=option: update_button_text(opt))
-    return submenu
+
+    return root_menu
 
 def fetch_data_from_url(url):
     response = requests.get(url)
@@ -140,7 +154,7 @@ if __name__ == "__main__":
     create_required_folders()
     download_json_file()
     load_docker_images()
-    
+
     # pull docker-manager image
     pull_docker_image()
 
@@ -202,7 +216,7 @@ if __name__ == "__main__":
     pegi3s_button = tk.Button(window, text="Open pegi3s", command=show_warning, bg="#3498db", fg="white",
                            font=("Helvetica", 10, "bold"), relief="raised", width=button_width, height=button_height)
 
-    # Remaining Application Buttons 
+    # Remaining Application Buttons
     test_data_button = tk.Button(window, text="Test Data", command=lambda: download_test_data(selected_image), bg="#3498db", fg="white", font=("Helvetica", 10, "bold"))
     results_button = tk.Button(window, text="Test Data Results", command=lambda: download_and_unzip_results(selected_image), bg="#3498db", fg="white", font=("Helvetica", 10, "bold"))
     run_file_button = tk.Button(window, text="Open Run Page", command=open_secondary_window_wrapper, bg="#3498db", fg="white", font=("Helvetica", 10, "bold"))
