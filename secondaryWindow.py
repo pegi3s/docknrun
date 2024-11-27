@@ -104,7 +104,7 @@ def open_secondary_window(image_selected):
         global prevInputName
         file_path = choose_file(entry)
         file_path = file_path.replace("/data", "", 1)
-        rumParamsNoInput = runCTextBox.get("1.0", tk.END)
+        rumParamsNoInput = run_command_text_box.get("1.0", tk.END)
         try:
             runParamsWithInput = prepare_docker_command.set_up_Input_Name(rumParamsNoInput, prevInputName, file_path,
                                                                           "/" + file_type + "File")
@@ -112,8 +112,8 @@ def open_secondary_window(image_selected):
             runParamsWithInput = prepare_docker_command.set_up_Input_Name(rumParamsNoInput, "/" + file_type + "File",
                                                                           file_path, "/" + file_type + "File")
         prevInputName = file_path
-        runCTextBox.delete("1.0", tk.END)
-        runCTextBox.insert(tk.END, runParamsWithInput)
+        run_command_text_box.delete("1.0", tk.END)
+        run_command_text_box.insert(tk.END, runParamsWithInput)
 
     # WARNING FOR THE USER WHEN THERE ARE MORE THAN 3 INPUT FILES
     canvas_warning = tk.Canvas(secondary_window, width=25, height=25)
@@ -233,7 +233,7 @@ def open_secondary_window(image_selected):
             messagebox.showwarning("Warning", "The output name mustan't have space")
 
         else:
-            rumParamsNotUpdated = runCTextBox.get("1.0", tk.END)
+            rumParamsNotUpdated = run_command_text_box.get("1.0", tk.END)
             try:
                 print(prevOutputName)
                 runParamUpdated = prepare_docker_command.set_up_Ouput_Name(rumParamsNotUpdated, prevOutputName,
@@ -245,8 +245,8 @@ def open_secondary_window(image_selected):
             os.makedirs(f"/data/{newOutputName}", exist_ok=True)
 
             prevOutputName = newOutputName
-            runCTextBox.delete("1.0", tk.END)
-            runCTextBox.insert(tk.END, runParamUpdated)
+            run_command_text_box.delete("1.0", tk.END)
+            run_command_text_box.insert(tk.END, runParamUpdated)
 
     # Button to replace the output in the command
     output_choose_button = tk.Button(secondary_window, text="Push", command=lambda: output_button(), bg="#3498db",
@@ -386,46 +386,52 @@ def open_secondary_window(image_selected):
         context_menu.post(event.x_root, event.y_root)
 
     # Create the title label for Text Box 2
-    runCLABEL = tk.Label(secondary_window, text="Run command", fg="black", font=("sans-serif", 12))
-    ToolTip.for_widget(runCLABEL, "Change the parameters below as you better see fit")
-    runCLABEL.place(relx=0.05, rely=0.79, anchor=tk.W)
-    runCLABEL.update()
+    run_command_label = tk.Label(secondary_window, text="Run command", fg="black", font=("sans-serif", 12))
+    ToolTip.for_widget(run_command_label, "Change the parameters below as you better see fit")
+    run_command_label.place(relx=0.05, rely=0.79, anchor=tk.W)
+    run_command_label.update()
 
     # Create the second text box
-    runCTextBox = tk.Text(secondary_window, width=60, height=3.5)
-    runCTextBox.place(relx=0.05, rely=0.87, anchor=tk.W)
-    runCommandBasis = image_data["invocation_general"]
-    parametersCom = image_data["usual_invocation_specific"]
+    run_command_text_box = tk.Text(secondary_window, width=60, height=3.5)
+    run_command_text_box.place(relx=0.05, rely=0.87, anchor=tk.W)
+    run_command_basis = image_data["invocation_general"]
+    run_command_usual_invocation_specific = image_data["usual_invocation_specific"]
     # displayRunC = prepare_docker_command.setUpRunCBox(runCommand)
-    if parametersCom == "":
-        runCTextBox.insert(tk.END, "This image doesnt require user input")
-        runCTextBox.config(state=tk.DISABLED)
+    if run_command_usual_invocation_specific == "":
+        run_command_text_box.insert(tk.END, "This image doesn't require user input")
+        run_command_text_box.config(state=tk.DISABLED)
     else:
-        runCTextBox.insert(tk.END, parametersCom)
+        run_command_text = run_command_usual_invocation_specific
 
-    def get_text_data_invocation_command():
-        global fullRunCommand
-        text_Data_com = image_data["test_invocation_specific"]
-        text_Data_dir = prepare_docker_command.setUpTestDataInvo(run_dir_path, text_Data_com)
-        fullRunCommand = text_Data_dir
-        runCTextBox.delete("1.0", tk.END)
-        runCTextBox.insert(tk.END, text_Data_dir)
+        usual_invocation_specific_comments = image_data["usual_invocation_specific_comments"]
+        if len(usual_invocation_specific_comments) > 0:
+            run_command_text += "\n\n# " + "\n# ".join(usual_invocation_specific_comments)
+
+        run_command_text_box.insert(tk.END, run_command_text)
+
+    def get_test_data_invocation_command():
+        global full_run_command
+        test_invocation_specific = image_data["test_invocation_specific"]
+        test_data_dir = prepare_docker_command.setUpTestDataInvo(run_dir_path, test_invocation_specific)
+        full_run_command = test_data_dir
+        run_command_text_box.delete("1.0", tk.END)
+        run_command_text_box.insert(tk.END, test_data_dir)
 
     # test_data_invocation button
-    tdButton = tk.Button(secondary_window, text="Test Data Invocation",
-                         command=lambda: get_text_data_invocation_command(), bg="#3498db", fg="white",
+    test_data_button = tk.Button(secondary_window, text="Test Data Invocation",
+                         command=lambda: get_test_data_invocation_command(), bg="#3498db", fg="white",
                          font=("Helvetica", 10, "bold"), relief="raised", width=16, height=1)
-    tdButton.place(relx=0.75, rely=0.84, anchor=tk.W)
+    test_data_button.place(relx=0.75, rely=0.84, anchor=tk.W)
 
-    def choose_LatestInvocation():
-        fileDir = "/data" + past_invocations_path + "/" + image_selected
+    def choose_latest_invocation():
+        file_dir = "/data" + past_invocations_path + "/" + image_selected
 
-        os.makedirs(fileDir, exist_ok=True)
+        os.makedirs(file_dir, exist_ok=True)
 
-        file_path = filedialog.askopenfilename(initialdir=fileDir, title="Choose a Latest Invocation",
+        file_path = filedialog.askopenfilename(initialdir=file_dir, title="Choose a Latest Invocation",
                                                filetypes=(("Text files", "*.sh"), ("All", "*.*")))
         if file_path:
-            # Exttracts text from selected archive
+            # Extracts text from selected archive
             with open(file_path, 'r') as file:
                 text_from_file = file.read()
                 setUpLatestInvoRunBox(text_from_file)
@@ -433,26 +439,26 @@ def open_secondary_window(image_selected):
     def setUpLatestInvoRunBox(latestInvoCom):
         comBasis = image_data["invocation_general"]
         lastInvoUpdCom = prepare_docker_command.remove_basis(latestInvoCom, comBasis, "pegi3s/" + image_selected)
-        runCTextBox.delete("1.0", tk.END)
-        runCTextBox.insert(tk.END, lastInvoUpdCom)
+        run_command_text_box.delete("1.0", tk.END)
+        run_command_text_box.insert(tk.END, lastInvoUpdCom)
 
     # Latest Invo Button
     liButton = tk.Button(secondary_window, text="Latest Invocation", bg="#3498db", fg="white",
                          font=("Helvetica", 10, "bold"), relief="raised", width=16, height=1,
-                         command=lambda: choose_LatestInvocation())
+                         command=lambda: choose_latest_invocation())
     liButton.place(relx=0.75, rely=0.9, anchor=tk.W)
 
     def updateFullRunCom(directory_path, runCommandBasis):  # checks path
-        global fullRunCommand
-        runParametersUser = runCTextBox.get("1.0", tk.END)
+        global full_run_command
+        runParametersUser = run_command_text_box.get("1.0", tk.END)
         runCommandBasisUpdated = runCommandBasis.replace(image_selected, selected_option.get())
-        fullRunCommand = prepare_docker_command.createFullRunC(directory_path, runCommandBasisUpdated,
-                                                               runParametersUser)
+        full_run_command = prepare_docker_command.createFullRunC(directory_path, runCommandBasisUpdated,
+                                                                 runParametersUser)
 
-    updateFullRunCom(run_dir_path, runCommandBasis)  # Useful for Docker images without parameters
+    updateFullRunCom(run_dir_path, run_command_basis)  # Useful for Docker images without parameters
 
     def run_CheckIfTestInvo():
-        user_Input = runCTextBox.get("1.0", tk.END)
+        user_Input = run_command_text_box.get("1.0", tk.END)
         test_Data_Invo = image_data["test_invocation_specific"]
         test_Data_Invo_Upd = prepare_docker_command.setUpTestDataInvo(run_dir_path, test_Data_Invo)
         if user_Input == test_Data_Invo_Upd:
@@ -460,11 +466,11 @@ def open_secondary_window(image_selected):
             return test_Data_Invo_Upd
         else:
             # if directory_entry.get() == "":
-            updateFullRunCom(run_dir_path, runCommandBasis)
+            updateFullRunCom(run_dir_path, run_command_basis)
             print("Dir Path: " + run_dir_path)
 
-            print(fullRunCommand)
-            return fullRunCommand
+            print(full_run_command)
+            return full_run_command
 
     if image_data["gui"] == True:
         subprocess.run("xhost +", shell=True, check=True)
