@@ -264,59 +264,64 @@ def open_secondary_window(image_selected):
     secondary_window.protocol("WM_DELETE_WINDOW", on_closing)
 
     # Label Developer Notes
-    dnLABEL = tk.Label(secondary_window, text="Developer Notes", fg="black", font=("sans-serif", 12))
-    dnLABEL.place(relx=0.05, rely=0.5, anchor=tk.W)
+    dn_label = tk.Label(secondary_window, text="Developer Notes", fg="black", font=("sans-serif", 12))
+    dn_label.place(relx=0.05, rely=0.5, anchor=tk.W)
 
     # Text Box User Notes
-    dnTextBox = scrolledtext.ScrolledText(secondary_window, width=60, height=3.5)
-    dnTextBox.place(relx=0.05, rely=0.57, anchor=tk.W)
+    dn_text_box = scrolledtext.ScrolledText(secondary_window, width=60, height=3.5)
+    dn_text_box.place(relx=0.05, rely=0.57, anchor=tk.W)
 
     # This section is meant to populate the Developer Notes
-    dn_UseVer = image_data["useful"]
-    dn_bug = image_data["bug_found"]
-    dn_notWork = image_data["not_working"]
-    dn_noLTested = image_data["no_longer_tested"]
-    dn_recLastTest = image_data["recommended_last_tested"]
-    dn_comments = image_data["comments"]
-    # Convert lists to strings
-    dn_UseVer_str = ", ".join(dn_UseVer)
-    dn_bug_str = ", ".join(dn_bug)
-    dn_notWork_str = ", ".join(dn_notWork)
-    dn_noLTested_str = ", ".join(dn_noLTested)
-    dn_comments_str = "\n".join(dn_comments)
+    developer_notes = ""
 
-    # Join the strings
-    developer_notesNF = ("The following versions are still useful: " + dn_UseVer_str +
-                         "\nA bug has been found in the following versions: " + dn_bug_str +
-                         "\nThese versions no longer work: " + dn_notWork_str +
-                         "\nThe following versions are no longer tested: " + dn_noLTested_str +
-                         "\nThe recommended version has been last tested on: " + dn_recLastTest +
-                         "\n" + dn_comments_str)
+    if len(image_data["comments"]) > 0:
+        developer_notes = "Comments:\n\t- " + "\n\t- ".join(image_data["comments"])
+        developer_notes += "\n"
+
+    if len(image_data["bug_found"]) > 0:
+        dn_bug = ", ".join(image_data["bug_found"])
+
+        developer_notes += f"\nA bug has been found in the following versions: {dn_bug}"
+
+    if len(image_data["not_working"]) > 0:
+        dn_not_working = ", ".join(image_data["not_working"])
+
+        developer_notes += f"\nThese versions no longer work: {dn_not_working}"
+
+    if len(image_data["no_longer_tested"]) > 0:
+        dn_no_longer_tested = ", ".join(image_data["no_longer_tested"])
+
+        developer_notes += f"\nThe following versions are no longer tested: {dn_no_longer_tested}"
+
+    if len(image_data["recommended_last_tested"]) > 0:
+        dn_recommended_last_tested = image_data["recommended_last_tested"]
+
+        developer_notes += f"\nThe recommended version has been last tested on: {dn_recommended_last_tested}"
 
     if image_data["podman"] == "untested":
-        developer_notesP = developer_notesNF + "Image untested for podman"
+        developer_notes += "\nImage untested for podman"
     elif image_data["podman"] == "tested":
-        developer_notesP = developer_notesNF + "Image tested for podman"
+        developer_notes += "\nImage tested for podman"
     else:
-        developer_notesP = developer_notesNF + "Image doesn't work for podman"
+        developer_notes += "\nImage doesn't work for podman"
 
     if image_data["singularity"] == "untested":
-        developer_notes = developer_notesP + "\nImage untested for singularity"
+        developer_notes += "\nImage untested for singularity"
     elif image_data["singularity"] == "tested":
-        developer_notes = developer_notesP + "\nImage tested for singularity"
+        developer_notes += "\nImage tested for singularity"
     else:
-        developer_notes = developer_notesP + "\nImage doesn't work for singularity"
+        developer_notes += "\nImage doesn't work for singularity"
 
-    dnTextBox.insert(tk.END, developer_notes)
-    dnTextBox.config(state=tk.DISABLED)
+    dn_text_box.insert(tk.END, developer_notes.strip())
+    dn_text_box.config(state=tk.DISABLED)
 
     # Label User Notes
-    unLABEL = tk.Label(secondary_window, text="User Notes", fg="black", font=("sans-serif", 12))
-    unLABEL.place(relx=0.05, rely=0.64, anchor=tk.W)
+    un_label = tk.Label(secondary_window, text="User Notes", fg="black", font=("sans-serif", 12))
+    un_label.place(relx=0.05, rely=0.64, anchor=tk.W)
 
     # Text Box User Notes
-    unTextBox = scrolledtext.ScrolledText(secondary_window, width=60, height=3.5)
-    unTextBox.place(relx=0.05, rely=0.71, anchor=tk.W)
+    un_text_box = scrolledtext.ScrolledText(secondary_window, width=60, height=3.5)
+    un_text_box.place(relx=0.05, rely=0.71, anchor=tk.W)
 
     # Section to get info from the config file. Dir that is obtained is the directory that is gonna be placed inside the run command, plus latest invo and user_notes
     with open("/data/config", "r") as file:
@@ -357,13 +362,13 @@ def open_secondary_window(image_selected):
         if os.path.exists(file_path):
             with open(file_path, "r", encoding="utf-8") as file:
                 content = file.read()
-                unTextBox.insert(tk.END, content)
+                un_text_box.insert(tk.END, content)
 
     def save_user_notes():
         file_path = os.path.join(user_notes_path, image_selected + ".txt")
         file_path = "/data" + file_path
         with open(file_path, "w", encoding="utf-8") as file:
-            content = unTextBox.get("1.0", tk.END)
+            content = un_text_box.get("1.0", tk.END)
             file.write(content)
             secondary_window.destroy()
 
