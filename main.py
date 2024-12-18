@@ -2,37 +2,29 @@
 
 # Standard Library Imports
 import json
-import sys
 import subprocess
-import zipfile
-import shutil
-import threading
-import os
-import mimetypes
 import tkinter as tk
-from tkinter import Menu, messagebox
-from urllib.parse import urlparse
 import webbrowser
+from tkinter import Menu, messagebox
 
 # Third-Party Imports
-import cv2
-import pyperclip
 import requests
 from PIL import Image, ImageTk
 
-# Local Imports
-from secondaryWindow import open_secondary_window
+from docker_manager_button import open_docker_manager_wrapper
+from download_test_data import download_test_data
+from download_test_results import download_and_unzip_results
+from email_button import setup_email_frame
 from nested_menu import (
     convert_ontology_categories_for_nested_button,
     hierarchy_structure,
     organize_images_for_nested_menu
 )
-from prepare_project import check_config_file, create_required_folders, download_json_file
 from play_video import play_video
-from download_test_data import download_test_data
-from download_test_results import download_and_unzip_results
-from email_button import setup_email_frame, copy_email
-from docker_manager_button import open_docker_manager_wrapper
+from prepare_project import check_config_file, create_required_folders, download_json_file
+# Local Imports
+from secondaryWindow import open_secondary_window
+from urls import generate_manual_url, generate_source_url, generate_pegi3s_url, generate_github_url
 
 # Global Variable for Docker Images
 imagens_docker = None
@@ -79,9 +71,20 @@ def handle_image_selection(image_name):
 def update_ui_for_image(image_data):
     global selected_image
     selected_image = image_data["name"]
-    doc_button.config(command=lambda: webbrowser.open(image_data["manual_url"]))
-    pegi3s_button.config(command=lambda: webbrowser.open(image_data["pegi3s_url"]))
-    github_button.config(command=lambda: webbrowser.open(image_data["github_url"]))
+
+    button_and_url = [
+        (manual_button, generate_manual_url(image_data)),
+        (pegi3s_button, generate_pegi3s_url(image_data)),
+        (github_button, generate_github_url(image_data)),
+        (source_code_button, generate_source_url(image_data))
+    ]
+
+    for button, url in button_and_url:
+        if url is None:
+            button.config(command=lambda: {}, state=tk.DISABLED)
+        else:
+            button.config(command=lambda web_url=url: webbrowser.open(web_url), state=tk.NORMAL)
+
     title_label.config(text=selected_image)
     description_label.config(text=image_data["description"], wraplength=800)
     place_buttons()
@@ -140,9 +143,10 @@ def on_leave(event):
     title_label.config(fg="black", font=("sans-serif", 40))
 
 def place_buttons():
-    doc_button.place(relx=0.98, rely=0.3, anchor=tk.E)
+    manual_button.place(relx=0.98, rely=0.3, anchor=tk.E)
     pegi3s_button.place(relx=0.98, rely=0.35, anchor=tk.E)
     github_button.place(relx=0.98, rely=0.4, anchor=tk.E)
+    source_code_button.place(relx=0.98, rely=0.45, anchor=tk.E)
     test_data_button.place(relx=0.35, rely=0.815, anchor=tk.CENTER)
     results_button.place(relx=0.65, rely=0.815, anchor=tk.CENTER)
     run_file_button.place(relx=0.5, rely=0.815, anchor=tk.CENTER)
@@ -209,9 +213,11 @@ if __name__ == "__main__":
     button_height = 1
 
     # Create buttons with consistent width and height
-    doc_button = tk.Button(window, text="Open Documentation", command=show_warning, bg="#3498db", fg="white",
+    manual_button = tk.Button(window, text="Open Documentation", command=show_warning, bg="#3498db", fg="white",
+                              font=("Helvetica", 10, "bold"), relief="raised", width=button_width, height=button_height)
+    github_button = tk.Button(window, text="Open GitHub", bg="#3498db", fg="white",
                            font=("Helvetica", 10, "bold"), relief="raised", width=button_width, height=button_height)
-    github_button = tk.Button(window, text="Open Github", bg="#3498db", fg="white",
+    source_code_button = tk.Button(window, text="Open source code", bg="#3498db", fg="white",
                            font=("Helvetica", 10, "bold"), relief="raised", width=button_width, height=button_height)
     pegi3s_button = tk.Button(window, text="Open pegi3s", command=show_warning, bg="#3498db", fg="white",
                            font=("Helvetica", 10, "bold"), relief="raised", width=button_width, height=button_height)

@@ -17,6 +17,7 @@ import prepare_docker_command
 from find_versions import findImageVersions
 from run_window import open_run_window
 from tooltip import ToolTip
+from urls import generate_pegi3s_url, generate_manual_url
 
 
 def open_secondary_window(image_selected):
@@ -88,12 +89,21 @@ def open_secondary_window(image_selected):
     docButtton = tk.Button(secondary_window, text="Open Documentation", bg="#3498db", fg="white",
                            font=("Helvetica", 10, "bold"), relief="raised", width=16,
                            height=1)  # opens image documentation
-    docButtton.config(command=lambda: webbrowser.open(image_data["manual_url"]))
+    manual_url = generate_manual_url(image_data)
+    if manual_url is None:
+        docButtton.config(state=tk.DISABLED)
+    else:
+        docButtton.config(command=lambda: webbrowser.open(manual_url))
 
     pegi3sButton = tk.Button(secondary_window, text="Open pegi3s", bg="#3498db", fg="white",
                              font=("Helvetica", 10, "bold"), relief="raised", width=16,
                              height=1)  # opens pegi3s page for the selected image
-    pegi3sButton.config(command=lambda: webbrowser.open(image_data["pegi3s_url"]))
+
+    pegi3s_url = generate_pegi3s_url(image_data)
+    if manual_url is None:
+        pegi3sButton.config(state=tk.DISABLED)
+    else:
+        pegi3sButton.config(command=lambda: webbrowser.open(pegi3s_url))
 
     docButtton.place(relx=0.3, rely=0.14, anchor=tk.CENTER)
     pegi3sButton.place(relx=0.7, rely=0.14, anchor=tk.CENTER)
@@ -147,7 +157,7 @@ def open_secondary_window(image_selected):
     def placeInputButtons(input_data_types, canvas):
         nonlocal butSelectFileType1, butSelectFileType2, butSelectFileType3, frame_No_Input
 
-        if input_data_types == [""]:
+        if len(input_data_types) == 0:
             # Creating frame within main window
             frame_No_Input.place(relx=0.05, rely=0.22, anchor=tk.NW)
 
@@ -192,6 +202,7 @@ def open_secondary_window(image_selected):
     input_data_types = None
     if "input_data_type" in image_data:
         input_data_types = image_data["input_data_type"]
+        print(input_data_types)
         placeInputButtons(input_data_types, canvas_warning)
 
     # Label for output
@@ -279,9 +290,15 @@ def open_secondary_window(image_selected):
         developer_notes += "\n"
 
     if len(image_data["bug_found"]) > 0:
-        dn_bug = ", ".join(image_data["bug_found"])
+        dn_bug = ""
 
-        developer_notes += f"\nA bug has been found in the following versions: {dn_bug}"
+        for bug in image_data["bug_found"]:
+            if len(bug["description"].strip()) == 0:
+                dn_bug += f"  - {bug['version']}\n"
+            else:
+                dn_bug += f"  - {bug['version']}: {bug['description']}\n"
+
+        developer_notes += f"\nA bug has been found in the following versions:\n{dn_bug}"
 
     if len(image_data["not_working"]) > 0:
         dn_not_working = ", ".join(image_data["not_working"])
@@ -293,10 +310,16 @@ def open_secondary_window(image_selected):
 
         developer_notes += f"\nThe following versions are no longer tested: {dn_no_longer_tested}"
 
-    if len(image_data["recommended_last_tested"]) > 0:
-        dn_recommended_last_tested = image_data["recommended_last_tested"]
+    if len(image_data["recommended"]) > 0:
+        dn_recommended_last_tested = ""
 
-        developer_notes += f"\nThe recommended version has been last tested on: {dn_recommended_last_tested}"
+        for recommended in image_data["recommended"]:
+            if len(recommended["date"].strip()) == 0:
+                dn_recommended_last_tested += f"  - {recommended['version']}\n"
+            else:
+                dn_recommended_last_tested += f"  - {recommended['version']} [{recommended['date']}]\n"
+
+        developer_notes += f"\nThe recommended version has been last tested on:\n{dn_recommended_last_tested}"
 
     if image_data["podman"] == "untested":
         developer_notes += "\nImage untested for podman"
