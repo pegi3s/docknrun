@@ -23,7 +23,7 @@ from nested_menu import (
 from play_video import play_video
 from prepare_project import check_config_file, create_required_folders, download_json_file
 # Local Imports
-from secondaryWindow import open_secondary_window
+from secondary_window import SecondaryWindow
 from urls import generate_manual_url, generate_source_url, generate_pegi3s_url, generate_github_url
 
 # Global Variable for Docker Images
@@ -90,7 +90,10 @@ def update_ui_for_image(image_data):
     place_buttons()
 
 def open_secondary_window_wrapper():
-    open_secondary_window(selected_image)
+    if imagens_docker is not None and (image_data := next((img for img in imagens_docker if img["name"] == selected_image), None)):
+        SecondaryWindow(image_data)
+    else:
+        messagebox.showwarning("Warning", "Selected image not found in JSON.")
 
 def show_context_menu(event):
     context_category_menu.tk_popup(event.x_root, event.y_root)

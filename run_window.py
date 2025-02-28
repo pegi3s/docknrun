@@ -1,65 +1,98 @@
-import subprocess
 import threading
 import time
-import tkinter as tk
+from subprocess import Popen, PIPE, STDOUT
+from tkinter import Toplevel, DISABLED, Label, WORD, Button, NORMAL, Wm, END, Tk, LEFT, BOTH
+from tkinter.scrolledtext import ScrolledText
+from typing import Optional
 
 
-def open_run_window(master, command):
-    def update_text_box(line):
-        info_running_text_box.config(state="normal")  # Activate to allow editing
-        info_running_text_box.insert("end", line + "\n")  # Adds text
-        info_running_text_box.see("end")  # Automated rulling
-        info_running_text_box.config(state="disabled")  # Disable
+class RunWindow(Toplevel):
+    def __init__(self, app_name: str, command: str, **kwargs) -> None:
+        super().__init__(**kwargs)
 
-    def display_close_button(running_time):
-        runtime_label.configure(text=f"Runtime: {running_time:.2f} seconds")
-        runtime_label.place(relx=0.5, rely=0.9, anchor=tk.CENTER)  # Shows execution time
-        close_window_button.place(relx=0.5, rely=0.965, anchor=tk.CENTER)  # Button to get to default state
+        self._command: str = command
+        self._process: Optional[Popen] = None
+        self._start_time: Optional[float] = None
+        self._running: bool = False
 
-    def update_output(process):
-        for line in process.stdout:
-            run_window.after(0, lambda: update_text_box(line.strip()))
+        self.title("Run command")
 
-    def close_window():
-        run_window.destroy()
+        # Component creation
+        font = ("Helvetica", 10, "bold"),
+        self._lbl_title: Label = Label(self, text=f"Executing: {app_name}", font=font)
 
-    run_window = tk.Toplevel(master)
-    run_window.title("Run Docker Image")
+        self._txt_output: ScrolledText = ScrolledText(self, wrap=WORD, height=15, width=80)
+        self._txt_output.config(state=DISABLED)
 
-    # Shows that image is running
-    running_text = tk.Label(run_window, text="Running:", fg="black", font=("sans-serif", 25))
+        self._lbl_time: Label = Label(self, text="Time: 0.0s", font=font)
 
-    # Creates a non-interactive text box
-    info_running_text_box = tk.Text(run_window, state=tk.DISABLED, height=30, width=55)
-    close_window_button = tk.Button(run_window, text="Okay", bg="#3498db", fg="white", font=("Helvetica", 10, "bold"),
-                                    relief="raised", width=16, height=1,
-                                    command=close_window)  # Opens image documentation
-    runtime_label = tk.Label(run_window, fg="black", font=("sans-serif", 15))
+        self._btn_stop: Button = Button(self, text="Stop execution", command=self._stop_execution, font=font)
+        self._btn_close: Button = Button(self, text="Close", command=self._close_window, font=font)
 
-    running_text.place(relx=0.5, rely=0.1, anchor=tk.CENTER)
-    info_running_text_box.place(relx=0.5, rely=0.5, anchor=tk.CENTER)
-    info_running_text_box.config(state="normal")  # Set state to normal to enable editing
-    info_running_text_box.delete("1.0", "end")  # Clear all text from the text box
-    info_running_text_box.config(state="disabled")  # Set state back to disabled to disable editing
+        # Component location
+        if isinstance(self.master, Wm):
+            self.geometry(self.master.geometry())
+            self.grab_set()
 
-    # Acts as a modal dialog
-    run_window.geometry(master.geometry())
-    run_window.grab_set()
+        self._lbl_title.pack(pady=10)
+        self._txt_output.pack(fill=BOTH, expand=True, padx=10, pady=10)
+        self._lbl_time.pack(pady=5)
+        self._btn_stop.pack(side=LEFT, expand=True, padx=10, pady=10)
+        self._btn_close.pack(side=LEFT, expand=True, padx=10, pady=10)
 
-    start_time = time.time()
+        # Events
+        self.protocol("WM_DELETE_WINDOW", self._close_window)
 
-    # Reads line by line
-    process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-                               universal_newlines=True)
+        # Run command
+        self._run_command()
 
-    thread = threading.Thread(target=update_output, args=(process,))
-    thread.start()
+    def _run_command(self) -> None:
+        self._running = True
+        self._start_time = time.time()
+        self._process = Popen(self._command, stdout=PIPE, stderr=STDOUT, text=True, shell=True)
 
-    # Waits until process is finnished
-    process.wait()
+        threading.Thread(target=self._monitor_output, daemon=True).start()
 
-    running_time = time.time() - start_time
+        self._update_time()
 
-    # Shows the button again
-    if display_close_button(running_time):
-        display_close_button(running_time)
+    def _monitor_output(self) -> None:
+        for line in iter(self._process.stdout.readline, ""):
+            if not self._running:
+                break
+            self._append_output(line)
+
+        self._process.stdout.close()
+        self._process.wait()
+        self._running = False
+
+        if self.winfo_exists():
+            # Disable stop button when done, only if the window was not already closed
+            self._btn_stop.config(state=DISABLED)
+
+    def _append_output(self, text: str) -> None:
+        self._txt_output.config(state=NORMAL)
+        self._txt_output.insert(END, text)
+        self._txt_output.yview(END)  # Auto-scroll to bottom
+        self._txt_output.config(state=DISABLED)
+
+    def _update_time(self) -> None:
+        elapsed_time = time.time() - self._start_time
+
+        if self._running:
+            self._lbl_time.config(text=f"Time: {elapsed_time:.1f}s")
+            self.after(100, self._update_time)  # Repeat the process asynchronously
+        else:
+            self._lbl_time.config(text=f"Time: {elapsed_time:.1f}s (Finished)")
+
+    def _stop_execution(self) -> None:
+        if self._running and self._process:
+            self._running = False
+
+            self._process.terminate()
+
+            self._append_output("\n========== Process terminated ==========\n")
+            self._btn_stop.config(state=DISABLED)
+
+    def _close_window(self) -> None:
+        self._stop_execution()
+        self.destroy()

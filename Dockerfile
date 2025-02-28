@@ -39,7 +39,7 @@ COPY download_test_results.py /opt
 COPY email_button.py /opt
 COPY docker_manager_button.py /opt
 COPY run_window.py /opt
-COPY secondaryWindow.py /opt
+COPY secondary_window.py /opt
 COPY tooltip.py /opt
 COPY urls.py /opt
 
