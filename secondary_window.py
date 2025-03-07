@@ -1,3 +1,4 @@
+import json
 import os
 import webbrowser
 from datetime import datetime
@@ -106,8 +107,8 @@ class _RunPanel(Frame):
         ToolTip.for_widget(self._lbl_run_command, "Change the parameters below as you better see fit")
         self._txt_run_command: ScrolledText = self._builder.build_scrolled_text()
         if not gui:
-            self._btn_test_data_invocation: Button = self._builder.build_button(text="Load Test Invocation")
-        self._btn_latest_invocation: Button = self._builder.build_button(text="Load Latest Invocation")
+            self._btn_test_data_invocation: Button = self._builder.build_button(text="Load test invocation")
+        self._btn_latest_invocation: Button = self._builder.build_button(text="Load past invocation")
 
         # Component location
         for col in range(3):
@@ -175,7 +176,7 @@ class _RunPanel(Frame):
 
         os.makedirs(latest_invocation_path, exist_ok=True)
 
-        file_path = filedialog.askopenfilename(initialdir=latest_invocation_path, title="Choose a Latest Invocation",
+        file_path = filedialog.askopenfilename(initialdir=latest_invocation_path, title="Choose a past invocation",
                                                filetypes=(("Text files", "*.sh"), ("All", "*.*")), parent=self)
         if file_path:
             # Extracts text from selected archive
@@ -719,3 +720,11 @@ class SecondaryWindow(Toplevel):
         self._create_latest_invocation_file(run_command=run_command)
 
         RunWindow(self._image_name, docker_run_command, master=self)
+
+
+if __name__ == "__main__":
+    with open("metadata.json", "r") as metadata:
+        image_datas = json.load(metadata)
+        image_data = next(image_data for image_data in image_datas if image_data["name"] == "seda")
+
+        SecondaryWindow(image_data, "/opt").wait_window()
