@@ -1,4 +1,4 @@
-#Finds Docker image versions. Used in the secondary window menu
+# Finds Docker image versions. Used in the secondary window menu
 
 def separate_text_by_indentation(text):
     lines = text.split('\n')
@@ -7,10 +7,10 @@ def separate_text_by_indentation(text):
     current_level = 0
 
     for line in lines:
-        if not line.strip(): # avoids reading blank lines 
+        if not line.strip():  # avoids reading blank lines
             continue
 
-        indent_level = line.count('\t')
+        indent_level = line.count("\t")
         line_content = line.strip()
 
         # Organize the structure
@@ -28,10 +28,11 @@ def separate_text_by_indentation(text):
 
     return matrix
 
-def findImageVersions (image, imageList):
+
+def find_image_versions(image, image_list):
     versions = []
-    print(image+"-gui")
-    for line in imageList.split('\n'):
+
+    for line in image_list.split("\n"):
         if line.strip() == "":
             continue
         if image in line:
@@ -43,5 +44,3 @@ def findImageVersions (image, imageList):
             if len(image_parts) == 2:
                 versions.append(image_parts[1].strip())
     return versions
-
-

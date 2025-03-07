@@ -1,4 +1,2 @@
 dir=/home/user/docknrun/
-past_invocations=/Manage_docs
-user_notes=/Manage_docs
-executable_files=/Manage_docs
+documentation_folder=Manage_docs

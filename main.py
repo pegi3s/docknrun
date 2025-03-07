@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 # Standard Library Imports
-import json
 import subprocess
 import tkinter as tk
 import webbrowser
@@ -12,26 +11,27 @@ import requests
 from PIL import Image, ImageTk
 
 from docker_manager_button import open_docker_manager_wrapper
-from download_test_data import download_test_data
-from download_test_results import download_and_unzip_results
 from email_button import setup_email_frame
+from environment import check_config_file, create_required_folders, download_json_file, get_file_paths, \
+    load_docker_images
 from nested_menu import (
     convert_ontology_categories_for_nested_button,
     hierarchy_structure,
     organize_images_for_nested_menu
 )
+from network import generate_manual_url, generate_source_url, generate_pegi3s_url, generate_github_url, \
+    download_test_data, download_and_unzip_results
 from play_video import play_video
-from prepare_project import check_config_file, create_required_folders, download_json_file
 # Local Imports
 from secondary_window import SecondaryWindow
-from urls import generate_manual_url, generate_source_url, generate_pegi3s_url, generate_github_url
 
 # Global Variable for Docker Images
-imagens_docker = None
+paths = get_file_paths()
+docker_images = None
 selected_image = None
 
 # Function to perform the pull of Docker manager
-def pull_docker_image():
+def pull_docker_manager_image():
     try:
         # Run the docker pull command
         result = subprocess.run(["docker", "pull", "pegi3s/docker-manager"], capture_output=True, text=True, check=True)
@@ -40,12 +40,6 @@ def pull_docker_image():
     except subprocess.CalledProcessError as e:
         # Handle errors in case the command fails
         print("An error occurred:", e.stderr)
-
-# Function to Load Docker Images from JSON File
-def load_docker_images(json_file_path='JSON'):
-    global imagens_docker
-    with open(json_file_path, 'rb') as file:
-        imagens_docker = json.load(file)
 
 # Functions for UI Setup
 def center_window(window, width, height):
@@ -63,7 +57,7 @@ def show_warning():
 
 def handle_image_selection(image_name):
     global selected_image
-    if image_data := next((img for img in imagens_docker if img["name"] == image_name), None):
+    if image_data := next((img for img in docker_images if img["name"] == image_name), None):
         update_ui_for_image(image_data)
     else:
         messagebox.showwarning("Warning", "Selected image not found in JSON.")
@@ -90,8 +84,8 @@ def update_ui_for_image(image_data):
     place_buttons()
 
 def open_secondary_window_wrapper():
-    if imagens_docker is not None and (image_data := next((img for img in imagens_docker if img["name"] == selected_image), None)):
-        SecondaryWindow(image_data)
+    if docker_images is not None and (image_data := next((img for img in docker_images if img["name"] == selected_image), None)):
+        SecondaryWindow(image_data, paths)
     else:
         messagebox.showwarning("Warning", "Selected image not found in JSON.")
 
@@ -157,13 +151,13 @@ def place_buttons():
 # Main Application Setup
 if __name__ == "__main__":
     # Initial Configuration Checks
-    check_config_file()
-    create_required_folders()
-    download_json_file()
-    load_docker_images()
+    check_config_file(paths)
+    create_required_folders(paths)
+    download_json_file(paths)
+    docker_images = load_docker_images(paths)
 
     # pull docker-manager image
-    pull_docker_image()
+    pull_docker_manager_image()
 
     # Create Main Window
     window = tk.Tk()
@@ -226,8 +220,8 @@ if __name__ == "__main__":
                            font=("Helvetica", 10, "bold"), relief="raised", width=button_width, height=button_height)
 
     # Remaining Application Buttons
-    test_data_button = tk.Button(window, text="Test Data", command=lambda: download_test_data(selected_image), bg="#3498db", fg="white", font=("Helvetica", 10, "bold"))
-    results_button = tk.Button(window, text="Test Data Results", command=lambda: download_and_unzip_results(selected_image), bg="#3498db", fg="white", font=("Helvetica", 10, "bold"))
+    test_data_button = tk.Button(window, text="Test Data", command=lambda: download_test_data(selected_image, paths), bg="#3498db", fg="white", font=("Helvetica", 10, "bold"))
+    results_button = tk.Button(window, text="Test Data Results", command=lambda: download_and_unzip_results(selected_image, paths), bg="#3498db", fg="white", font=("Helvetica", 10, "bold"))
     run_file_button = tk.Button(window, text="Open Run Page", command=open_secondary_window_wrapper, bg="#3498db", fg="white", font=("Helvetica", 10, "bold"))
 
     # Additional GUI Elements

@@ -4,25 +4,22 @@ import webbrowser
 from datetime import datetime
 from tkinter import Frame, Toplevel, Label, Button, Menu, StringVar, Entry, filedialog, Misc, LabelFrame, \
     messagebox
-from tkinter.constants import CENTER, W, BOTH, EW, E, NSEW, END, DISABLED, X, LEFT, RIGHT, NORMAL, NS
+from tkinter.constants import CENTER, W, BOTH, EW, E, NSEW, END, DISABLED, X, LEFT, RIGHT, NORMAL
 from tkinter.scrolledtext import ScrolledText
 # ttk's Radiobutton is used because default one is now properly working when value change is cancelled in _on_mode_change
 from tkinter.ttk import Notebook, Radiobutton, Style
-from typing import List, Optional, Final, Any, Dict
+from typing import List, Optional, Final, Any, Callable
 
 import requests
 
-from find_versions import findImageVersions
+from environment import load_config_file, DocknrunPaths
+from find_versions import find_image_versions
+from network import generate_manual_url, generate_pegi3s_url
 from run_window import RunWindow
 from tooltip import ToolTip
-from urls import generate_manual_url, generate_pegi3s_url
 
-_PATH_DEFAULT_BASE: Final[str] = "/data"
-_PATH_DEFAULT_OUTPUT_FOLDER: Final[str] = "outputFolder"
 _PATH_DEFAULT_DOCKER_COMMAND_DATA_DIR: Final[str] = "/your/data/dir"
-_PATH_DEFAULT_PAST_INVOCATIONS: Final[str]  = os.path.join("Docker_notebook", "Latest_Invocations")
-_PATH_DEFAULT_USER_NOTES: Final[str]  = os.path.join("Docker_notebook", "User_Notes")
-_PATH_DEFAULT_EXECUTABLE_FILES: Final[str]  = os.path.join("Docker_notebook", "Executable_Files")
+_RUN_COMMAND_VERSION_LINE_PREFIX: Final[str] = "# version=pegi3s/"
 
 _GUI_INVOCATION_GENERAL: Final[str] = f"""
 xhost + && docker run --rm -ti -e USERID=$UID -e USER=$USER -e DISPLAY=$DISPLAY -v /var/db:/var/db:Z -v /tmp/.X11-unix:/tmp/.X11-unix -v $HOME/.Xauthority:/home/developer/.Xauthority -v \"{_PATH_DEFAULT_DOCKER_COMMAND_DATA_DIR}:/data\" -v /var/run/docker.sock:/var/run/docker.sock -v /tmp:/tmp pegi3s/
@@ -88,17 +85,18 @@ class _ComponentBuilder:
 class _RunPanel(Frame):
     def __init__(self,
                  image_data,
+                 paths: DocknrunPaths,
                  gui: bool = False,
-                 base_path: str = _PATH_DEFAULT_BASE,
-                 past_invocations_path: str = _PATH_DEFAULT_PAST_INVOCATIONS,
                  fill_run_command: bool = True,
+                 version_change_callback: Callable[[str], bool] = lambda _: True,
                  **kwargs):
         super().__init__(**kwargs)
 
         self._image_data = image_data
         self._gui: bool = gui
-        self._base_path: str = base_path
-        self._past_invocations_path: str = past_invocations_path
+        self._paths: DocknrunPaths = paths
+        self._default_paths: DocknrunPaths = DocknrunPaths.build_default_paths()
+        self._version_change_callback: Callable[[str], bool] = version_change_callback
 
         self._builder: _ComponentBuilder = _ComponentBuilder(self)
 
@@ -126,7 +124,7 @@ class _RunPanel(Frame):
         # Events
         if not gui:
             self._btn_test_data_invocation.config(command=self._on_test_data_invocation)
-        self._btn_latest_invocation.config(command=self._on_latest_invocation_load)
+        self._btn_latest_invocation.config(command=self._on_past_invocation_load)
 
         # Run command
         if fill_run_command:
@@ -168,20 +166,36 @@ class _RunPanel(Frame):
 
     def _on_test_data_invocation(self) -> None:
         run_command = self._image_data["test_invocation_specific"]
-        run_command = run_command.replace(_PATH_DEFAULT_BASE, self._base_path)
+        run_command = run_command.replace(self._default_paths.base_path, self._paths.base_path)
         self._set_text_in_run_command(run_command)
 
-    def _on_latest_invocation_load(self) -> bool:
-        latest_invocation_path = os.path.join(self._base_path, self._past_invocations_path, self._image_data["name"])
+    def _on_past_invocation_load(self) -> bool:
+        past_invocations_path = os.path.join(self._paths.doc_past_invocations_path, self._image_data["name"])
 
-        os.makedirs(latest_invocation_path, exist_ok=True)
+        os.makedirs(past_invocations_path, exist_ok=True)
 
-        file_path = filedialog.askopenfilename(initialdir=latest_invocation_path, title="Choose a past invocation",
-                                               filetypes=(("Text files", "*.sh"), ("All", "*.*")), parent=self)
+        file_path = filedialog.askopenfilename(initialdir=past_invocations_path, title="Choose a past invocation",
+                                               filetypes=(("Script files", "*.sh"), ("All", "*.*")), parent=self)
         if file_path:
+            version_prefix = f"{_RUN_COMMAND_VERSION_LINE_PREFIX}{self._image_data['name']}:"
+
             # Extracts text from selected archive
             with open(file_path, "r") as file:
-                self._set_text_in_run_command(file.read())
+                run_command = ""
+                for line in file.readlines():
+                    if len(run_command) == 0:  # First line
+                        if line.startswith(version_prefix):
+                            version = line.replace(version_prefix, "").strip()
+
+                            if self._version_change_callback(version):
+                                continue
+                            else:
+                                return False
+
+                    run_command += line
+
+                self._set_text_in_run_command(run_command.strip())
+
                 return True
 
         return False
@@ -190,11 +204,12 @@ class _RunPanel(Frame):
 class _IORunPanel(_RunPanel):
     def __init__(self,
                  image_data,
+                 paths: DocknrunPaths,
                  gui: bool = False,
-                 base_path: str = _PATH_DEFAULT_BASE,
-                 past_invocations_path: str = _PATH_DEFAULT_PAST_INVOCATIONS,
+                 version_change_callback: Callable[[str], bool] = lambda _: True,
                  **kwargs):
-        super().__init__(image_data, gui, base_path, past_invocations_path, fill_run_command=False, **kwargs)
+        super().__init__(image_data, paths, gui, fill_run_command=False,
+                         version_change_callback=version_change_callback, **kwargs)
 
         self._input_data_widgets: dict[str, tuple[Entry, Button]] = {}
 
@@ -232,7 +247,7 @@ class _IORunPanel(_RunPanel):
         self._ent_output: Entry = Entry(self, readonlybackground="lightyellow")
         self._btn_output: Button = self._builder.build_button(text="Select output folder")
 
-        self._ent_output.insert(0, self._build_path(_PATH_DEFAULT_OUTPUT_FOLDER))
+        self._ent_output.insert(0, self._paths.output_folder_path)
         self._ent_output.config(state="readonly")
 
         if self._is_auto_mode():
@@ -274,10 +289,10 @@ class _IORunPanel(_RunPanel):
         return self._sv_mode.get() == "auto"
 
     def _build_path(self, sub_path: str) -> str:
-        return os.path.join(self._base_path, sub_path)
+        return os.path.join(self._paths.base_path, sub_path)
 
     def _build_default_path(self, sub_path: str) -> str:
-        return f"{_PATH_DEFAULT_BASE}/{sub_path}"  # Do not use os.path.join here! (/ separator must be used)
+        return f"{self._default_paths.base_path}/{sub_path}"  # Do not use os.path.join here! (/ separator must be used)
 
     def _build_path_for_input_data_type(self, data_type) -> str:
         return self._build_path(f"{data_type}File")
@@ -315,7 +330,7 @@ class _IORunPanel(_RunPanel):
             input_path = entry.get()
             run_command = run_command.replace(self._build_default_path_for_input_data_type(data_type), input_path)
 
-        run_command = run_command.replace(self._build_default_path(_PATH_DEFAULT_OUTPUT_FOLDER), self._ent_output.get())
+        run_command = run_command.replace(self._default_paths.output_folder_path, self._ent_output.get())
 
         return run_command
 
@@ -332,19 +347,19 @@ class _IORunPanel(_RunPanel):
         if self._is_auto_mode():
             self._sv_mode.set("manual")
 
-    def _on_latest_invocation_load(self) -> None:
-        if super()._on_latest_invocation_load():
+    def _on_past_invocation_load(self) -> None:
+        if super()._on_past_invocation_load():
             if self._is_auto_mode():
                 self._sv_mode.set("manual")
 
     def _on_choose_input_file(self, data_type: str) -> None:
-        input_path = filedialog.askopenfilename(parent=self, initialdir=self._base_path)
+        input_path = filedialog.askopenfilename(parent=self, initialdir=self._paths.base_path)
 
         if input_path:
             self._change_input_data(data_type, input_path)
 
     def _on_output_push(self) -> None:
-        output_path = filedialog.askdirectory(parent=self, initialdir=self._base_path)
+        output_path = filedialog.askdirectory(parent=self, initialdir=self._paths.base_path)
 
         if output_path:
             self._change_output_data(output_path)
@@ -352,7 +367,9 @@ class _IORunPanel(_RunPanel):
     def _on_mode_change(self, *args) -> None:
         if self._is_auto_mode():
             if (not self._is_run_command_changed() or
-                messagebox.askyesno("Confirm", "Switching to automatic mode will discard any changes done in 'Run Command'. Do you want to continue?", parent=self)):
+                messagebox.askyesno("Confirm",
+                                    "Switching to automatic mode will discard any changes done in 'Run Command'. Do you want to continue?",
+                                    parent=self)):
 
                 for entry, button in self._input_data_widgets.values():
                     entry.config(state="readonly")
@@ -380,16 +397,15 @@ class _IORunPanel(_RunPanel):
 
 
 class SecondaryWindow(Toplevel):
-    def __init__(self, image_data, base_path: str = _PATH_DEFAULT_BASE, master=None, cnf=None, **kwargs):
+    def __init__(self, image_data, paths: DocknrunPaths, master=None, cnf=None, **kwargs):
         super().__init__(master, {} if cnf is None else cnf, **kwargs)
 
         self.title("Run Docker Image")
 
-        # self.wm_minsize(width=700, height=800)
-
         self._image_data = image_data
-        self._base_path: str = base_path
-        self._config: dict[str, str] = self._load_config()
+        self._paths: DocknrunPaths = paths
+        self._default_paths: DocknrunPaths = DocknrunPaths.build_default_paths()
+        self._config: dict[str, str] = load_config_file(os.path.join(self._paths.base_path, "config"))
         self._image_versions: List[str] = self._load_image_versions()
         current_version: str = self._image_versions[-1]
 
@@ -417,18 +433,26 @@ class SecondaryWindow(Toplevel):
         if self._has_cli() and self._has_gui():
             self._run_panel_container: Notebook = Notebook(self._frame)
 
-            tab_cli = _IORunPanel(self._image_data, False, self._base_path, self._past_invocations_path, master=self._run_panel_container)
-            tab_gui = _RunPanel(self._image_data, True, self._base_path, self._past_invocations_path, master=self._run_panel_container)
+            tab_cli = _IORunPanel(self._image_data, self._paths, False,
+                                  version_change_callback=self._on_change_version_by_loading_past_invocation,
+                                  master=self._run_panel_container)
+            tab_gui = _RunPanel(self._image_data, self._paths, True,
+                                version_change_callback=self._on_change_version_by_loading_past_invocation,
+                                master=self._run_panel_container)
 
             self._run_panel_container.add(tab_cli, text="CLI", padding=10)
             self._run_panel_container.add(tab_gui, text="GUI", padding=10)
         elif self._has_cli():
             self._run_panel_container: LabelFrame = self._builder.build_label_frame(text="CLI")
-            self._run_panel = _IORunPanel(self._image_data, False, self._base_path, self._past_invocations_path, master=self._run_panel_container)
+            self._run_panel = _IORunPanel(self._image_data, self._paths, False,
+                                          version_change_callback=self._on_change_version_by_loading_past_invocation,
+                                          master=self._run_panel_container)
             self._run_panel.pack(fill=BOTH, expand=True)
         elif self._has_gui():
             self._run_panel_container: LabelFrame = self._builder.build_label_frame(text="GUI")
-            self._run_panel = _RunPanel(self._image_data, True, self._base_path, self._past_invocations_path, master=self._run_panel_container)
+            self._run_panel = _RunPanel(self._image_data, self._paths, True,
+                                        version_change_callback=self._on_change_version_by_loading_past_invocation,
+                                        master=self._run_panel_container)
             self._run_panel.pack(fill=BOTH, expand=True)
         else:
             raise RuntimeError("Image should have a GUI or a CLI")
@@ -497,26 +521,18 @@ class SecondaryWindow(Toplevel):
         return self._image_data["name"]
 
     @property
+    def _image_version(self):
+        return self._sv_image_version.get()
+
+    @property
     def _host_dir(self) -> str:
         return self._config["dir"]
 
-    @property
-    def _past_invocations_path(self) -> str:
-        return self._get_config_path("past_invocations", _PATH_DEFAULT_PAST_INVOCATIONS)
-
-    @property
-    def _user_notes_path(self) -> str:
-        return self._get_config_path("user_notes", _PATH_DEFAULT_USER_NOTES)
-
-    @property
-    def _executable_files_path(self) -> str:
-        return self._get_config_path("executable_files", _PATH_DEFAULT_EXECUTABLE_FILES)
-
     def _get_config_path(self, path_name: str, default_path: str) -> str:
         if path_name in self._config and len(self._config[path_name].strip()) > 0:
-            return os.path.join(self._base_path, self._config[path_name].strip())
+            return os.path.join(self._paths.base_path, self._config[path_name].strip())
         else:
-            return os.path.join(self._base_path, default_path)
+            return os.path.join(self._paths.base_path, default_path)
 
     def _has_gui(self) -> bool:
         return self._image_data["gui"]
@@ -564,11 +580,7 @@ class SecondaryWindow(Toplevel):
             file.write(self._txt_user_notes.get("1.0", END))
 
     def _build_user_notes_path(self):
-        user_notes_path = self._user_notes_path
-
-        os.makedirs(user_notes_path, exist_ok=True)
-
-        return os.path.join(user_notes_path, self._image_data["name"] + ".txt")
+        return os.path.join(self._paths.doc_user_notes_path, self._image_name + ".txt")
 
     def _build_developer_notes(self) -> str:
         developer_notes = ""
@@ -628,7 +640,7 @@ class SecondaryWindow(Toplevel):
     def _load_image_versions(self) -> List[str]:
         response = requests.get("http://evolution6.i3s.up.pt/static/pegi3s/dockerfiles/images-and-tags.txt")
         if response.status_code == 200:
-            versions = findImageVersions(self._image_name, response.text)
+            versions = find_image_versions(self._image_name, response.text)
             if "latest" in versions:
                 versions.remove("latest")
 
@@ -637,27 +649,22 @@ class SecondaryWindow(Toplevel):
         else:
             raise IOError("Couldn't download image versions")
 
-    def _load_config(self) -> Dict[str, str]:
-        config_path = os.path.join(self._base_path, "config")
-
-        with open(config_path, "r") as config_file:
-            return {key.strip(): value.strip() for key, value in
-                    [line.split("=", 1) for line in config_file.readlines()]}
-
     def _create_executable_file(self, creation_time: Optional[str] = None, run_command: Optional[str] = None) -> None:
-        self._create_script_file(self._executable_files_path, creation_time, run_command)
+        self._create_script_file(self._paths.doc_executable_files_path, creation_time, run_command)
 
-    def _create_latest_invocation_file(self, creation_time: Optional[str] = None, run_command: Optional[str] = None) -> None:
-        self._create_script_file(self._past_invocations_path, creation_time, run_command)
+    def _create_latest_invocation_file(self, creation_time: Optional[str] = None,
+                                       run_command: Optional[str] = None) -> None:
+        self._create_script_file(self._paths.doc_past_invocations_path, creation_time, run_command)
 
-    def _create_script_file(self, scripts_path: str, creation_time: Optional[str] = None, run_command: Optional[str] = None) -> None:
+    def _create_script_file(self, scripts_path: str, creation_time: Optional[str] = None,
+                            run_command: Optional[str] = None) -> None:
         if creation_time is None:
             creation_time = datetime.now().strftime("%Y%m%d_%H%M%S")
 
         if run_command is None:
             run_command = self._get_active_run_panel().run_command
 
-        executables_path = os.path.join(self._base_path, scripts_path, self._image_name)
+        executables_path = os.path.join(self._paths.base_path, scripts_path, self._image_name)
         os.makedirs(executables_path, exist_ok=True)
 
         interface_type = "CLI" if self._is_cli_selected() else "GUI"
@@ -669,17 +676,39 @@ class SecondaryWindow(Toplevel):
     def _build_docker_run_command(self, run_command: Optional[str] = None) -> str:
         if run_command is None:
             run_command = self._get_active_run_panel().run_command
-        image_version = self._sv_image_version.get()
 
         if self._is_cli_selected():
-            docker_invocation = self._image_data["invocation_general"].strip() + ":" + image_version
+            docker_invocation = self._image_data["invocation_general"].strip() + ":" + self._image_version
         else:
-            docker_invocation = f"{_GUI_INVOCATION_GENERAL}{self._image_name}:{image_version}"
+            docker_invocation = f"{_GUI_INVOCATION_GENERAL}{self._image_name}:{self._image_version}"
 
         docker_invocation = docker_invocation.replace(_PATH_DEFAULT_DOCKER_COMMAND_DATA_DIR, self._config["dir"])
-        run_command = run_command.replace(self._base_path, _PATH_DEFAULT_BASE)
+        run_command = run_command.replace(self._paths.base_path, self._default_paths.base_path)
 
         return docker_invocation + " " + run_command
+
+    def _on_change_version_by_loading_past_invocation(self, version: str) -> bool:
+        current_version = self._image_version
+
+        if version == current_version:
+            return True
+        else:
+            if version in self._image_versions:
+                response = messagebox.askyesnocancel("Change version",
+                                                     f"This past invocation was configured for the {version} version of {self._image_data['name']}. Do you want to switch to this version?",
+                                                     parent=self)
+                if response is None:
+                    return False
+                else:
+                    if response:
+                        self._sv_image_version.set(version)
+
+                    return True
+            else:
+                return messagebox.askokcancel("Unknown version",
+                                              f"This past invocation was configured for the {version} version of {self._image_data['name']}, which is not registered. Do you want to continue loading this invocation?",
+                                              parent=self)
+
 
     def _on_change_version(self, version: str) -> None:
         self._sv_image_version.set(version)
@@ -704,14 +733,19 @@ class SecondaryWindow(Toplevel):
         else:
             self._save_user_notes()
 
-
     def _on_create_executable_file(self) -> None:
         current_time = datetime.now().strftime("%Y%m%d_%H%M%S")
 
         run_command = self._get_active_run_panel().run_command
+        docker_run_command = self._build_docker_run_command(run_command)
 
-        self._create_executable_file(current_time, run_command)
+        run_command = f"{_RUN_COMMAND_VERSION_LINE_PREFIX}{self._image_name}:{self._image_version}\n\n{run_command}\n"
+
+        self._create_executable_file(current_time, docker_run_command)
         self._create_latest_invocation_file(current_time, run_command)
+
+        messagebox.showinfo("Create executable", "Executable file and past invocation file successfully created.",
+                            parent=self)
 
     def _on_run_command(self) -> None:
         run_command = self._get_active_run_panel().run_command
