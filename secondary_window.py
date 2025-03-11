@@ -751,7 +751,8 @@ class SecondaryWindow(Toplevel):
         run_command = self._get_active_run_panel().run_command
         docker_run_command = self._build_docker_run_command(run_command)
 
-        self._create_latest_invocation_file(run_command=run_command)
+        run_command_with_version = f"{_RUN_COMMAND_VERSION_LINE_PREFIX}{self._image_name}:{self._image_version}\n\n{run_command}\n"
+        self._create_latest_invocation_file(run_command=run_command_with_version)
 
         RunWindow(self._image_name, docker_run_command, master=self)
 
