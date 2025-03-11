@@ -43,5 +43,3 @@ COPY pegi3s_logo.png /opt
 WORKDIR /opt
 
 ENTRYPOINT ["python3", "main.py"]
-
-#docker run --rm -ti -e USERID=$UID -e USER=$USER -e DISPLAY=$DISPLAY -v /var/db:/var/db:Z -v /tmp/.X11-unix:/tmp/.X11-unix -v $HOME/.Xauthority:/home/developer/.Xauthority -v /var/run/docker.sock:/var/run/docker.sock -v /tmp:/tmp -v /mnt/c/Users/jbvie/Documents/Docker/docknrun1.0/Tests_and_documentation:/data pegi3s/docknrun
