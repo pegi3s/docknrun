@@ -755,11 +755,3 @@ class SecondaryWindow(Toplevel):
         self._create_latest_invocation_file(run_command=run_command_with_version)
 
         RunWindow(self._image_name, docker_run_command, master=self)
-
-
-if __name__ == "__main__":
-    with open("metadata.json", "r") as metadata:
-        image_datas = json.load(metadata)
-        image_data = next(image_data for image_data in image_datas if image_data["name"] == "seda")
-
-        SecondaryWindow(image_data, "/opt").wait_window()
