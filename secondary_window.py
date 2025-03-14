@@ -206,11 +206,13 @@ class _IORunPanel(_RunPanel):
                  image_data,
                  paths: DocknrunPaths,
                  gui: bool = False,
+                 requires_input_folder: bool = False,
                  version_change_callback: Callable[[str], bool] = lambda _: True,
                  **kwargs):
         super().__init__(image_data, paths, gui, fill_run_command=False,
                          version_change_callback=version_change_callback, **kwargs)
 
+        self._requires_input_folder: bool = requires_input_folder
         self._input_data_widgets: dict[str, tuple[Entry, Button]] = {}
 
         # Component creation
@@ -224,7 +226,27 @@ class _IORunPanel(_RunPanel):
 
         self._lbl_input: Label = self._builder.build_title_label(text="Input files")
         self._frame_input: Frame = Frame(self)
+
+        self._ent_input_folder: Optional[Entry] = None
+        self._btn_input_folder: Optional[Button] = None
+
         if self._requires_input_data():
+            index_offset = 0
+
+            if self._requires_input_folder:
+                default_input_path = self._build_path_for_input_folder()
+
+                self._ent_input_folder = Entry(self._frame_input, readonlybackground="lightyellow")
+                self._btn_input_folder = self._builder.build_button(master=self._frame_input,
+                                                               text=f"Select an input folder")
+                self._ent_input_folder.insert(0, default_input_path)
+                self._ent_input_folder.config(state="readonly")
+
+                self._ent_input_folder.grid(row=0, column=0, columnspan=3, sticky=EW)
+                self._btn_input_folder.grid(row=0, column=3, columnspan=1)
+
+                index_offset += 1
+
             for i, data_type in enumerate(self._input_data):
                 default_input_path = self._build_path_for_input_data_type(data_type)
 
@@ -234,8 +256,8 @@ class _IORunPanel(_RunPanel):
                 ent_input.insert(0, default_input_path)
                 ent_input.config(state="readonly")
 
-                ent_input.grid(row=i, column=0, columnspan=3, sticky=EW)
-                btn_input.grid(row=i, column=3, columnspan=1)
+                ent_input.grid(row=i + index_offset, column=0, columnspan=3, sticky=EW)
+                btn_input.grid(row=i + index_offset, column=3, columnspan=1)
 
                 self._input_data_widgets[data_type] = (ent_input, btn_input)
         else:
@@ -272,7 +294,10 @@ class _IORunPanel(_RunPanel):
         # Events
         self._trace_mode_id = self._sv_mode.trace_add("write", self._on_mode_change)
 
-        # Input data files
+        # Input data folder and files
+        if self._requires_input_folder:
+            self._btn_input_folder.config(command=self._on_choose_input_folder)
+
         for data_type, (ent_input, btn_input) in self._input_data_widgets.items():
             btn_input.config(command=lambda dt=data_type: self._on_choose_input_file(dt))
 
@@ -300,11 +325,17 @@ class _IORunPanel(_RunPanel):
     def _build_default_path_for_input_data_type(self, data_type) -> str:
         return self._build_default_path(f"{data_type}File")
 
+    def _build_path_for_input_folder(self) -> str:
+        return self._build_path(f"inputFolder")
+
+    def _build_default_path_for_input_folder(self) -> str:
+        return self._build_default_path(f"inputFolder")
+
     def _count_input_data(self) -> int:
         return len(self._input_data) if self._input_data is not None else 0
 
     def _requires_input_data(self) -> bool:
-        return self._count_input_data() > 0
+        return self._requires_input_folder or self._count_input_data() > 0
 
     def _change_input_data(self, data_type: str, path: str) -> None:
         entry = self._input_data_widgets[data_type][0]
@@ -312,6 +343,14 @@ class _IORunPanel(_RunPanel):
         entry.delete(0, END)
         entry.insert(0, path)  # Insert the selected file path
         entry.config(state="readonly")
+
+        self._set_text_in_run_command(self._build_run_command())
+
+    def _change_input_folder(self, path: str) -> None:
+        self._ent_input_folder.config(state=NORMAL)
+        self._ent_input_folder.delete(0, END)
+        self._ent_input_folder.insert(0, path)  # Insert the selected file path
+        self._ent_input_folder.config(state="readonly")
 
         self._set_text_in_run_command(self._build_run_command())
 
@@ -325,6 +364,10 @@ class _IORunPanel(_RunPanel):
 
     def _build_run_command(self) -> str:
         run_command = super()._build_run_command()
+
+        if self._requires_input_folder:
+            input_path = self._ent_input_folder.get()
+            run_command = run_command.replace(self._build_default_path_for_input_folder(), input_path)
 
         for data_type, (entry, _) in self._input_data_widgets.items():
             input_path = entry.get()
@@ -357,6 +400,14 @@ class _IORunPanel(_RunPanel):
 
         if input_path:
             self._change_input_data(data_type, input_path)
+
+    def _on_choose_input_folder(self) -> None:
+        input_path = filedialog.askdirectory(parent=self, initialdir=self._paths.base_path)
+
+        if input_path:
+            os.makedirs(input_path, exist_ok=True)
+            
+            self._change_input_folder(input_path)
 
     def _on_output_push(self) -> None:
         output_path = filedialog.askdirectory(parent=self, initialdir=self._paths.base_path)
@@ -430,10 +481,14 @@ class SecondaryWindow(Toplevel):
 
         self._run_panel_container: Optional[Notebook | LabelFrame] = None
         self._run_panel: Optional[_RunPanel] = None
+
+        requires_input_folder: bool = "inputFolder" in self._image_data["usual_invocation_specific"]
+
         if self._has_cli() and self._has_gui():
             self._run_panel_container: Notebook = Notebook(self._frame)
 
             tab_cli = _IORunPanel(self._image_data, self._paths, False,
+                                  requires_input_folder=requires_input_folder,
                                   version_change_callback=self._on_change_version_by_loading_past_invocation,
                                   master=self._run_panel_container)
             tab_gui = _RunPanel(self._image_data, self._paths, True,
@@ -445,6 +500,7 @@ class SecondaryWindow(Toplevel):
         elif self._has_cli():
             self._run_panel_container: LabelFrame = self._builder.build_label_frame(text="CLI")
             self._run_panel = _IORunPanel(self._image_data, self._paths, False,
+                                          requires_input_folder=requires_input_folder,
                                           version_change_callback=self._on_change_version_by_loading_past_invocation,
                                           master=self._run_panel_container)
             self._run_panel.pack(fill=BOTH, expand=True)
