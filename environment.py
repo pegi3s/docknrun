@@ -10,11 +10,12 @@ import requests
 DEFAULT_BASE_PATH: Final[str] = "/data"
 DEFAULT_CONFIG_FILE_NAME: Final[str] = "config"
 DEFAULT_OUTPUT_FOLDER_NANE: Final[str] = "output"
-DEFAULT_TEST_DATA_FOLDER_NAME: Final[str] = "Test_data"
-DEFAULT_DOCUMENTATION_FOLDER_NAME: Final[str] = "Manage_docs"
-DEFAULT_PAST_INVOCATIONS_FOLDER_NAME: Final[str] = "Past_Invocations"
-DEFAULT_USER_NOTES_FOLDER_NAME: Final[str] = "User_Notes"
-DEFAULT_EXECUTABLE_FILES_FOLDER_NAME: Final[str] = "Executable_Files"
+DEFAULT_TEST_DATA_FOLDER_NAME: Final[str] = "test/data"
+DEFAULT_TEST_RESULTS_FOLDER_NAME: Final[str] = "test/results"
+DEFAULT_DOCUMENTATION_FOLDER_NAME: Final[str] = "docs"
+DEFAULT_PAST_INVOCATIONS_FOLDER_NAME: Final[str] = "past_invocations"
+DEFAULT_USER_NOTES_FOLDER_NAME: Final[str] = "user_notes"
+DEFAULT_EXECUTABLE_FILES_FOLDER_NAME: Final[str] = "executable_files"
 DEFAULT_METADATA_PATH: Final[str] = "/opt"
 DEFAULT_METADATA_FILE_NAME: Final[str] = "metadata.json"
 
@@ -24,6 +25,7 @@ class DocknrunPaths:
     base_path: str
     output_folder_path: str
     test_data_folder_path: str
+    test_results_folder_path: str
     doc_past_invocations_path: str
     doc_executable_files_path: str
     doc_user_notes_path: str
@@ -37,6 +39,7 @@ class DocknrunPaths:
             base_path=DEFAULT_BASE_PATH,
             output_folder_path=f"{DEFAULT_BASE_PATH}/{DEFAULT_OUTPUT_FOLDER_NANE}",
             test_data_folder_path=f"{DEFAULT_BASE_PATH}/{DEFAULT_TEST_DATA_FOLDER_NAME}",
+            test_results_folder_path=f"{DEFAULT_BASE_PATH}/{DEFAULT_TEST_RESULTS_FOLDER_NAME}",
             doc_past_invocations_path=f"{DEFAULT_BASE_PATH}/{DEFAULT_DOCUMENTATION_FOLDER_NAME}/{DEFAULT_PAST_INVOCATIONS_FOLDER_NAME}",
             doc_executable_files_path=f"{DEFAULT_BASE_PATH}/{DEFAULT_DOCUMENTATION_FOLDER_NAME}/{DEFAULT_EXECUTABLE_FILES_FOLDER_NAME}",
             doc_user_notes_path=f"{DEFAULT_BASE_PATH}/{DEFAULT_DOCUMENTATION_FOLDER_NAME}/{DEFAULT_USER_NOTES_FOLDER_NAME}",
@@ -50,6 +53,7 @@ class DocknrunPaths:
             self.base_path,
             self.output_folder_path,
             self.test_data_folder_path,
+            self.test_results_folder_path,
             self.doc_past_invocations_path,
             self.doc_executable_files_path,
             self.doc_user_notes_path,
@@ -86,6 +90,7 @@ def get_file_paths(base_path: str = "/data") -> DocknrunPaths:
         base_path=base_path,
         output_folder_path=os.path.join(base_path, DEFAULT_OUTPUT_FOLDER_NANE),
         test_data_folder_path=os.path.join(base_path, DEFAULT_TEST_DATA_FOLDER_NAME),
+        test_results_folder_path=os.path.join(base_path, DEFAULT_TEST_RESULTS_FOLDER_NAME),
         doc_past_invocations_path=os.path.join(documentation_folder_path, DEFAULT_PAST_INVOCATIONS_FOLDER_NAME),
         doc_user_notes_path=os.path.join(documentation_folder_path, DEFAULT_USER_NOTES_FOLDER_NAME),
         doc_executable_files_path=os.path.join(documentation_folder_path, DEFAULT_EXECUTABLE_FILES_FOLDER_NAME),
@@ -95,7 +100,7 @@ def get_file_paths(base_path: str = "/data") -> DocknrunPaths:
     )
 
 
-# Create required folders /data/outputFolder and /data/Test_data
+# Create required folders
 def create_required_folders(paths: DocknrunPaths) -> None:
     # Create the folders if they don't already exist
     for folder in paths.list_dir_paths():

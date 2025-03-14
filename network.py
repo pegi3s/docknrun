@@ -92,7 +92,7 @@ def download_and_unzip_results(selected_image: str, paths: DocknrunPaths) -> Non
     try:
         # Define paths and file
         docker_images = load_docker_images(paths)
-        output_path = paths.base_path
+        output_path = paths.test_results_folder_path
 
         # Get the test_results_url for the selected Docker image
         image_data = next((img for img in docker_images if img["name"] == selected_image), None)
