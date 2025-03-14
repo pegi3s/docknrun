@@ -9,7 +9,7 @@ import requests
 
 DEFAULT_BASE_PATH: Final[str] = "/data"
 DEFAULT_CONFIG_FILE_NAME: Final[str] = "config"
-DEFAULT_OUTPUT_FOLDER_NANE: Final[str] = "outputFolder"
+DEFAULT_OUTPUT_FOLDER_NANE: Final[str] = "output"
 DEFAULT_TEST_DATA_FOLDER_NAME: Final[str] = "Test_data"
 DEFAULT_DOCUMENTATION_FOLDER_NAME: Final[str] = "Manage_docs"
 DEFAULT_PAST_INVOCATIONS_FOLDER_NAME: Final[str] = "Past_Invocations"
