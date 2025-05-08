@@ -70,7 +70,7 @@ def check_config_file(paths: DocknrunPaths) -> None:
 def load_config_file(config_path: str = f"{DEFAULT_BASE_PATH}/{DEFAULT_CONFIG_FILE_NAME}") -> Dict[str, str]:
     with open(config_path, "r") as config_file:
         return {key.strip(): value.strip() for key, value in
-                [line.split("=", 1) for line in config_file.readlines()]}
+                [line.split("=", 1) for line in config_file.readlines() if len(line.strip()) > 0]}
 
 
 def get_file_paths(base_path: str = "/data") -> DocknrunPaths:
