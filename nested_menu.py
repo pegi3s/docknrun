@@ -32,9 +32,11 @@ def parse_obo_file(obo_text_data):
         elif line.startswith('is_a:'):
             is_a = line.split(': ')[1]
             current_term.is_a = is_a
-            if is_a in terms:
-                parent_term = terms[is_a]
-                parent_term.add_child(current_term)
+
+    for term in terms.values():
+        if term.is_a is not None:
+            parent_term = terms[term.is_a]
+            parent_term.add_child(term)
 
     return terms
 
