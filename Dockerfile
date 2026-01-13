@@ -1,28 +1,49 @@
-FROM pegi3s/docker
+FROM pegi3s/docker:29.0.1
 
 ENV DEBIAN_FRONTEND=noninteractive
+ENV BROWSER=firefox
 
-RUN apt-get -y update
-RUN apt-get install -y wget gnupg snap
-RUN apt-get install -y python3
-RUN apt-get install -y python3-tk
-RUN apt-get install -y python3-pil python3-pil.imagetk
-RUN apt-get install -y python3-opencv
-RUN apt-get install -y python3-pyperclip
-RUN apt-get install -y firefox
-RUN apt-get install -y x11-xserver-utils
-RUN apt-get install -y xclip
-RUN apt-get install -y dbus-x11
-RUN apt-get install -y python3-requests
+RUN apt-get update && \
+    apt-get install -y software-properties-common && \
+    add-apt-repository -y universe && \
+    apt-get update && \
+    apt-get install -y --no-install-recommends \
+      gnupg \
+      ca-certificates \
+      wget \
+      tar \
+      xz-utils \
+      xvfb \
+      libgtk-3-0 \
+      libdbus-glib-1-2 \
+      libx11-xcb1 \
+      libasound2t64 \
+      fonts-liberation \
+      dbus-x11 \
+      x11-xserver-utils \
+      xclip \
+      python3 python3-tk python3-pil python3-pil.imagetk python3-opencv python3-pyperclip python3-requests \
+    && rm -rf /var/lib/apt/lists/*
 
-RUN \
-  FIREFOX_SETTING="/usr/lib/firefox/browser/defaults/preferences/firefox.js" && \
-  echo 'pref("datareporting.policy.firstRunURL", "");' > ${FIREFOX_SETTING} && \
-  echo 'pref("datareporting.policy.dataSubmissionEnabled", false);' >> ${FIREFOX_SETTING} && \
-  echo 'pref("datareporting.healthreport.service.enabled", false);' >> ${FIREFOX_SETTING} && \
-  echo 'pref("datareporting.healthreport.uploadEnabled", false);' >> ${FIREFOX_SETTING} && \
-  echo 'pref("trailhead.firstrun.branches", "nofirstrun-empty");' >> ${FIREFOX_SETTING} && \
-  echo 'pref("browser.aboutwelcome.enabled", false);' >> ${FIREFOX_SETTING}
+RUN wget -O /tmp/firefox.tar.xz \
+      "https://download.mozilla.org/?product=firefox-latest&os=linux64&lang=es-ES" && \
+    tar -xJf /tmp/firefox.tar.xz -C /opt && \
+    ln -sf /opt/firefox/firefox /usr/local/bin/firefox && \
+    rm -f /tmp/firefox.tar.xz
+
+RUN mkdir -p /opt/firefox/defaults/pref && \
+    printf '%s\n' \
+      'lockPref("datareporting.policy.firstRunURL", "");' \
+      'lockPref("datareporting.policy.dataSubmissionEnabled", false);' \
+      'lockPref("datareporting.healthreport.service.enabled", false);' \
+      'lockPref("datareporting.healthreport.uploadEnabled", false);' \
+      'lockPref("trailhead.firstrun.branches", "nofirstrun-empty");' \
+      'lockPref("browser.aboutwelcome.enabled", false);' \
+    > /opt/firefox/mozilla.cfg && \
+    printf '%s\n' \
+      'pref("general.config.filename", "mozilla.cfg");' \
+      'pref("general.config.obscure_value", 0);' \
+    > /opt/firefox/defaults/pref/local-settings.js
 
 ENV DISPLAY=:0
 
