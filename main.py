@@ -176,7 +176,7 @@ if __name__ == "__main__":
     subtitle.place(relx=0.5, rely=0.35, anchor=tk.CENTER)
 
     # Logo
-    logo_image = Image.open("pegi3s_logo.png").resize((90, 90), Image.ANTIALIAS)
+    logo_image = Image.open("pegi3s_logo.png")
     i3s_image = ImageTk.PhotoImage(logo_image)
     logo_label = tk.Label(blue_box_frame, image=i3s_image, cursor="hand2")
     logo_label.image = i3s_image
