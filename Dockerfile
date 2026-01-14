@@ -26,7 +26,7 @@ RUN apt-get update && \
     && rm -rf /var/lib/apt/lists/*
 
 RUN wget -O /tmp/firefox.tar.xz \
-      "https://download.mozilla.org/?product=firefox-latest&os=linux64&lang=es-ES" && \
+      "https://download.mozilla.org/?product=firefox-latest&os=linux64" && \
     tar -xJf /tmp/firefox.tar.xz -C /opt && \
     ln -sf /opt/firefox/firefox /usr/local/bin/firefox && \
     rm -f /tmp/firefox.tar.xz
